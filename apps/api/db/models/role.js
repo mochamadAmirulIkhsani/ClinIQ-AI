@@ -8,11 +8,6 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'role_id',
         as: 'user'
       })
-
-      Role.hasMany(models.PoolCms, {
-        foreignKey: 'role_id',
-        as: 'poolCms'
-      })
     }
   }
 
