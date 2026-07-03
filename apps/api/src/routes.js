@@ -18,4 +18,6 @@ router.use(
 )
 router.use('/dashboard/master', authentication)
 
+router.use('/register', require('./modules/dashboard/auth'))
+
 module.exports = router

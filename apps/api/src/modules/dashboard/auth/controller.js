@@ -4,9 +4,62 @@ const bcrypt = require('../../../utils/bcrypt')
 const JWT = require('../../../utils/jwt')
 const { HttpStatusCode } = require('axios')
 const { validateRequest } = require('../../../utils/validation')
-const { LoginSchema, ChangePasswordSchema } = require('./schema')
+const {
+  LoginSchema,
+  ChangePasswordSchema,
+  RegisterUserSchema
+} = require('./schema')
 
 class Controller {
+  static async registerUser(req, res) {
+    try {
+      const data = validateRequest(RegisterUserSchema, req)
+
+      const existingUser = await db.user.findOne({
+        where: { email: data.email }
+      })
+
+      if (existingUser) {
+        throw {
+          code: HttpStatusCode.Conflict,
+          message: 'User already registered'
+        }
+      }
+
+      const defaultRole = await db.role.findOne({
+        where: { name: 'User' }
+      })
+
+      if (!defaultRole) {
+        throw {
+          code: HttpStatusCode.InternalServerError,
+          message: 'Default role User is not available'
+        }
+      }
+
+      const defaultStatus = data.status !== undefined ? data.status : true
+      const passwordHash = bcrypt.hashPassword(data.password)
+
+      const newUser = await db.user.create({
+        name: data.name,
+        email: data.email,
+        password: passwordHash,
+        role_id: defaultRole.id,
+        status: defaultStatus
+      })
+
+      res
+        .status(HttpStatusCode.Created)
+        .json(api.results(newUser, HttpStatusCode.Created, { req }))
+    } catch (err) {
+      err.code =
+        typeof err.code !== 'undefined' && err.code !== null
+          ? err.code
+          : HttpStatusCode.InternalServerError
+      res.status(err.code).json(api.results(null, err.code, { err }))
+    }
+  }
+
   static async loginUser(req, res) {
     try {
       const data = validateRequest(LoginSchema, req)
