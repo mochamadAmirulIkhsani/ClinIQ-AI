@@ -30,7 +30,10 @@ const authentication = async (req, res, next) => {
         }
       }
 
-      if (!user.is_active) {
+      const isActive =
+        typeof user.status !== 'undefined' ? user.status : user.is_active
+
+      if (!isActive) {
         throw {
           code: HttpStatusCode.Unauthorized,
           message: 'Unauthorized, Account is not active'

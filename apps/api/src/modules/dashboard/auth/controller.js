@@ -198,7 +198,18 @@ class Controller {
 
   static async getMe(req, res) {
     try {
-      const user = await db.user.findByPk(req.user.id)
+      const user = await db.user.findByPk(req.user.id, {
+        attributes: [
+          'id',
+          'name',
+          'email',
+          'status',
+          'avatar',
+          'role_id',
+          'last_updated_password',
+          'last_activity'
+        ]
+      })
 
       if (!user) {
         throw {
@@ -207,59 +218,28 @@ class Controller {
         }
       }
 
+      const role = user.role_id
+        ? await db.role.findByPk(user.role_id, {
+            attributes: ['id', 'name']
+          })
+        : null
+
       const result = {
         id: user.id,
         email: user.email,
         name: user.name,
-        access: []
+        status: user.status,
+        avatar: user.avatar,
+        role_id: user.role_id,
+        last_updated_password: user.last_updated_password,
+        last_activity: user.last_activity,
+        role: role
+          ? {
+              id: role.id,
+              name: role.name
+            }
+          : null
       }
-
-      const access = await db.sequelize.query(
-        `
-            SELECT 
-               m.id as menu_id,
-               m.name as menu,
-               m.code as module,
-               ua.read as read_permission,
-               ua.create as create_permission,
-               ua.update as update_permission,
-               ua.delete as delete_permission
-            FROM menus m
-            LEFT JOIN user_access ua ON ua.menu_id = m.id AND ua.user_id = :user_id
-         `,
-        {
-          replacements: {
-            user_id: user.id
-          },
-          type: db.sequelize.QueryTypes.SELECT
-        }
-      )
-
-      const accessFormatted = access.map((item) => ({
-        menu_id: item.menu_id,
-        module: item.module,
-        name: item.menu,
-        permissions: [
-          {
-            action: 'read',
-            granted: Boolean(item.read_permission)
-          },
-          {
-            action: 'create',
-            granted: Boolean(item.create_permission)
-          },
-          {
-            action: 'update',
-            granted: Boolean(item.update_permission)
-          },
-          {
-            action: 'delete',
-            granted: Boolean(item.delete_permission)
-          }
-        ]
-      }))
-
-      result.access = accessFormatted
 
       res
         .status(HttpStatusCode.Ok)
