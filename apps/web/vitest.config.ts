@@ -7,6 +7,8 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["./test/setup.ts"],
     include: ["app/**/*.test.{ts,tsx}"],
+    reporters: ["agent"],
+    silent: "passed-only",
     restoreMocks: true,
     clearMocks: true,
   },

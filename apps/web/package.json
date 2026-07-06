@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "eslint --max-warnings 0",
     "test": "vitest run",
-    "test:watch": "vitest",
+    "test:watch": "DEBUG_PRINT_LIMIT=800 vitest --reporter=dot --silent=passed-only",
     "check-types": "next typegen && tsc --noEmit"
   },
   "dependencies": {
