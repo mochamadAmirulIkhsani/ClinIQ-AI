@@ -27,11 +27,22 @@ class Controller {
 
       const rows = await db.Disease.findAll({
         where: {
-          name: { [Op.iLike]: `%${q}%` }
+          [Op.or]: [
+            { name: { [Op.iLike]: `${q}%` } }, // Starts with q
+            { name: { [Op.iLike]: `%${q}%` } } // Contains q
+          ]
         },
         attributes: ['id', 'icd_code', 'name'],
         limit,
-        order: [['name', 'ASC']]
+        order: [
+          [
+            db.sequelize.literal(
+              `CASE WHEN "Disease"."name" ILIKE '${q}%' THEN 0 ELSE 1 END`
+            ),
+            'ASC'
+          ],
+          ['name', 'ASC']
+        ]
       })
 
       await setCacheWithTTL(cacheKey, rows, CACHE_TTL_SECONDS)
