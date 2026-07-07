@@ -34,12 +34,7 @@ const authorize = (...roles) => {
 
 const authentication = async (req, res, next) => {
   try {
-    const reqToken =
-      req.cookies?.token ||
-      (req.headers.authorization?.startsWith('Bearer ')
-        ? req.headers.authorization.slice(7)
-        : null) ||
-      null
+    const reqToken = req.cookies?.token || null
 
     if (!reqToken) {
       throw {
@@ -64,10 +59,7 @@ const authentication = async (req, res, next) => {
         }
       }
 
-      const isActive =
-        typeof user.status !== 'undefined' ? user.status : user.is_active
-
-      if (!isActive) {
+      if (!user.is_active) {
         throw {
           code: HttpStatusCode.Unauthorized,
           message: 'Unauthorized, Account is not active'
@@ -90,23 +82,17 @@ const authentication = async (req, res, next) => {
     err.code = err.code ?? HttpStatusCode.InternalServerError
 
     if (err.name === 'JsonWebTokenError') {
-      const newErr = {
+      err = {
         message: 'Unauthorized, invalid token',
         code: HttpStatusCode.Unauthorized
       }
-      return res
-        .status(newErr.code)
-        .json(api(null, newErr.code, { err: newErr }))
     }
 
     if (err.name === 'TokenExpiredError') {
-      const newErr = {
+      err = {
         message: 'Unauthorized, token expired',
         code: HttpStatusCode.Unauthorized
       }
-      return res
-        .status(newErr.code)
-        .json(api(null, newErr.code, { err: newErr }))
     }
 
     res.status(err.code).json(api(null, err.code, { err }))
