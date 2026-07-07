@@ -20,7 +20,7 @@ class Controller {
       const q = req.query.q || null
 
       const search = q
-        ? `AND (u.name LIKE :search OR u.email LIKE :search)`
+        ? 'AND (u.name LIKE :search OR u.email LIKE :search)'
         : ''
 
       const count = await db.sequelize.query(
