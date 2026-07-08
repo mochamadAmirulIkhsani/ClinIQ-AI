@@ -358,4 +358,103 @@ describe('groups API', () => {
       expect(response.body.message).toBe('Only owner can delete group')
       expect(stillExists).toBeTruthy()
    })
+
+   it('join group rejects invalid invite code', async () => {
+      const group = await createGroup({
+         inviteCode: 'GRPTEST1'
+      })
+
+      const response = await authedPost(
+         `/api/v1/groups/${group.id}/join`,
+         {
+            invite_code: 'WRONGCODE'
+         },
+         cookies.member
+      )
+
+      expect(response.status).toBe(400)
+      expect(response.body.success).toBe(false)
+      expect(response.body.message).toBe('Invalid invite code')
+   })
+
+   it('join group returns 404 for missing group', async () => {
+      const response = await authedPost(
+         '/api/v1/groups/99999999-9999-4999-8999-999999999999/join',
+         {
+            invite_code: 'GRPTEST1'
+         },
+         cookies.member
+      )
+
+      expect(response.status).toBe(404)
+      expect(response.body.success).toBe(false)
+      expect(response.body.message).toBe('Group not found')
+   })
+
+   it('group detail rejects non-member', async () => {
+      const group = await createGroup({
+         inviteCode: 'GRPTEST1'
+      })
+
+      const response = await authedGet(
+         `/api/v1/groups/${group.id}`,
+         cookies.outsider
+      )
+
+      expect(response.status).toBe(403)
+      expect(response.body.success).toBe(false)
+      expect(response.body.message).toBe('You are not a member of this group')
+   })
+
+   it('leave group rejects non-member', async () => {
+      const group = await createGroup({
+         inviteCode: 'GRPTEST1'
+      })
+
+      const response = await authedPost(
+         `/api/v1/groups/${group.id}/leave`,
+         {},
+         cookies.outsider
+      )
+
+      expect(response.status).toBe(404)
+      expect(response.body.success).toBe(false)
+      expect(response.body.message).toBe('Not a member of this group')
+   })
+
+   it('owner cannot leave their own group', async () => {
+      const group = await createGroup({
+         inviteCode: 'GRPTEST1'
+      })
+
+      const response = await authedPost(
+         `/api/v1/groups/${group.id}/leave`,
+         {},
+         cookies.owner
+      )
+
+      expect(response.status).toBe(400)
+      expect(response.body.success).toBe(false)
+      expect(response.body.message).toBe(
+         'Owner cannot leave. Transfer ownership or delete group.'
+      )
+   })
+
+   it('owner can delete group', async () => {
+      const group = await createGroup({
+         inviteCode: 'GRPTEST1'
+      })
+
+      const response = await authedDelete(
+         `/api/v1/groups/${group.id}`,
+         cookies.owner
+      )
+
+      const deletedGroup = await db.Group.findByPk(group.id)
+
+      expect(response.status).toBe(200)
+      expect(response.body.success).toBe(true)
+      expect(response.body.data.message).toBe('Group deleted')
+      expect(deletedGroup).toBeNull()
+   })
 })
