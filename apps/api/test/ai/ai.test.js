@@ -196,6 +196,93 @@ describe('AI explanation API', () => {
       expect(response.body.message).toBe('Disease not found')
    })
 
+   it('explanation generates and stores explanation when not cached', async () => {
+      const explanation = {
+         overview: 'Generated overview',
+         pathophysiology: 'Generated pathophysiology',
+         clinical_features: ['fever'],
+         diagnosis: ['clinical exam'],
+         management: ['supportive care'],
+         prevention: ['hygiene'],
+         key_points: ['early recognition']
+      }
+
+      const aiCreate = vi.fn(async () => ({
+         choices: [
+            {
+               message: {
+                  content: JSON.stringify(explanation)
+               }
+            }
+         ]
+      }))
+
+      setAIClient({
+         chat: {
+            completions: {
+               create: aiCreate
+            }
+         }
+      })
+
+      const response = await authedGet(
+         `/api/v1/ai/explanation/${disease.id}?locale=en`
+      )
+
+      const saved = await db.AIExplanation.findOne({
+         where: {
+            disease_id: disease.id,
+            locale: 'en'
+         }
+      })
+
+      expect(response.status).toBe(201)
+      expect(response.body.success).toBe(true)
+      expect(response.body.data).toMatchObject({
+         disease_id: disease.id,
+         locale: 'en',
+         overview: explanation.overview
+      })
+      expect(saved).toBeTruthy()
+      expect(saved.overview).toBe(explanation.overview)
+      expect(aiCreate).toHaveBeenCalledTimes(1)
+   })
+
+   it('explanation returns existing database explanation without AI call', async () => {
+      await db.AIExplanation.create({
+         disease_id: disease.id,
+         locale: 'id',
+         overview: 'Stored overview',
+         pathophysiology: 'Stored pathophysiology',
+         clinical_features: ['stored feature'],
+         diagnosis: ['stored diagnosis'],
+         management: ['stored management'],
+         prevention: ['stored prevention'],
+         key_points: ['stored key point']
+      })
+
+      const aiCreate = vi.fn()
+
+      setAIClient({
+         chat: {
+            completions: {
+               create: aiCreate
+            }
+         }
+      })
+
+      const response = await authedGet(`/api/v1/ai/explanation/${disease.id}`)
+
+      expect(response.status).toBe(200)
+      expect(response.body.success).toBe(true)
+      expect(response.body.data).toMatchObject({
+         disease_id: disease.id,
+         locale: 'id',
+         overview: 'Stored overview'
+      })
+      expect(aiCreate).not.toHaveBeenCalled()
+   })
+
    it('AI provider failure returns safe error response', async () => {
       setAIClient({
          chat: {
