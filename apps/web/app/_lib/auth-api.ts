@@ -47,12 +47,12 @@ const API_BASE_URL =
 async function parseApiResponse<T>(response: Response): Promise<T> {
   const result = (await response.json()) as ApiResult<T>;
 
-  if (!response.ok || !result.success) {
+  if (!response.ok) {
     throw new Error(result.message || "Permintaan gagal diproses.");
   }
 
   if (!result.data) {
-    throw new Error("Respons server tidak valid.");
+    throw new Error(result.message || "Respons server tidak valid.");
   }
 
   return result.data;
@@ -81,6 +81,10 @@ export function loginUser(payload: LoginPayload): Promise<AuthUser> {
 
 export function registerUser(payload: RegisterPayload): Promise<AuthUser> {
   return requestJson<AuthUser>("/api/dashboard/auth/register", payload);
+}
+
+export function logoutUser(): Promise<boolean> {
+  return requestJson<boolean>("/api/dashboard/auth/logout", {});
 }
 
 export async function getCurrentUser(): Promise<AuthUser> {
