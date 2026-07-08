@@ -22,7 +22,8 @@ const TEST_EMAILS = [
    'users-update-1@example.test',
    'users-update-2@example.test',
    'users-delete@example.test',
-   'users-reset@example.test'
+   'users-reset@example.test',
+   'users-access@example.test'
 ]
 
 let userRole
@@ -338,5 +339,118 @@ describe('users API', () => {
       expect(response.status).toBe(200)
       expect(response.body.success).toBe(true)
       expect(response.body.data.email).toBe('users-reset@example.test')
+   })
+
+   it('create user rejects superadmin role selection', async () => {
+      const [superadminRole] = await db.role.findOrCreate({
+         where: {
+            name: 'Users Test Superadmin'
+         },
+         defaults: {
+            name: 'Users Test Superadmin',
+            is_superadmin: true
+         }
+      })
+
+      await superadminRole.update({
+         is_superadmin: true
+      })
+
+      const response = await authedPost('/api/v1/users', {
+         name: 'Blocked Superadmin',
+         email: 'users-access@example.test',
+         password: TEST_PASSWORD,
+         role_id: superadminRole.id
+      })
+
+      await superadminRole.destroy()
+
+      expect(response.status).toBe(400)
+      expect(response.body.success).toBe(false)
+      expect(response.body.message).toBe('Invalid select role')
+   })
+
+   it('show user returns target user data', async () => {
+      const targetUser = await createUser({
+         email: 'users-show@example.test',
+         name: 'Visible Target User'
+      })
+
+      const response = await authedGet(`/api/v1/users/${targetUser.id}`)
+
+      expect(response.status).toBe(200)
+      expect(response.body.success).toBe(true)
+      expect(response.body.data).toMatchObject({
+         id: targetUser.id,
+         name: 'Visible Target User',
+         email: 'users-show@example.test',
+         status: true,
+         role_id: userRole.id
+      })
+      expect(response.body.data.password).toBeUndefined()
+   })
+
+   it('update user succeeds', async () => {
+      const targetUser = await createUser({
+         email: 'users-update-1@example.test',
+         name: 'Before Update'
+      })
+
+      const response = await authedPut(`/api/v1/users/${targetUser.id}`, {
+         name: 'After Update',
+         email: 'users-update-1@example.test'
+      })
+
+      expect(response.status).toBe(200)
+      expect(response.body.success).toBe(true)
+      expect(response.body.data).toMatchObject({
+         id: targetUser.id,
+         name: 'After Update',
+         email: 'users-update-1@example.test',
+         status: true
+      })
+   })
+
+   it('delete user rejects invalid UUID', async () => {
+      const response = await authedDelete('/api/v1/users/not-a-uuid')
+
+      expect(response.status).toBe(400)
+      expect(response.body.success).toBe(false)
+      expect(response.body.message).toBe('Invalid user ID')
+   })
+
+   it('delete user returns 404 for missing user', async () => {
+      const response = await authedDelete(
+         '/api/v1/users/99999999-9999-4999-8999-999999999999'
+      )
+
+      expect(response.status).toBe(404)
+      expect(response.body.success).toBe(false)
+      expect(response.body.message).toBe('User not found')
+   })
+
+   it('reset password rejects invalid UUID', async () => {
+      const response = await authedPost('/api/v1/users/not-a-uuid/reset-password', {
+         password: RESET_PASSWORD,
+         confirm_password: RESET_PASSWORD
+      })
+
+      expect(response.status).toBe(400)
+      expect(response.body.success).toBe(false)
+      expect(response.body.message).toBe('Invalid user ID')
+   })
+
+   it('reset password returns 404 for missing user', async () => {
+      const response = await authedPost(
+         '/api/v1/users/99999999-9999-4999-8999-999999999999/reset-password',
+         {
+            password: RESET_PASSWORD,
+            confirm_password: RESET_PASSWORD
+         }
+      )
+
+      expect(response.status).toBe(404)
+      expect(response.body.success).toBe(false)
+      expect(response.body.message).toBe('User not found')
    })
 })
