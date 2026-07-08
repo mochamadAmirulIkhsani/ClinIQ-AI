@@ -5,9 +5,9 @@ process.env.ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS || '*'
 const request = require('supertest')
 const { Op } = require('sequelize')
 
-const app = require('../index')
-const db = require('../db/models')
-const bcrypt = require('../src/utils/bcrypt')
+const app = require('../../index')
+const db = require('../../db/models')
+const bcrypt = require('../../src/utils/bcrypt')
 
 const TEST_PASSWORD = 'Password123'
 const NEW_PASSWORD = 'NewPassword123'
@@ -89,7 +89,6 @@ describe('auth API', () => {
 
    afterAll(async () => {
       await cleanupUsers()
-      await db.sequelize.close()
    })
 
    it('registers a user successfully', async () => {
