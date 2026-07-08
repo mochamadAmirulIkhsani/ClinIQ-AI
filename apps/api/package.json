@@ -7,7 +7,8 @@
     "start": "bun index.js",
     "dev": "bun --watch index.js",
     "lint": "eslint . --ext .js --fix",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "migrate": "sequelize db:migrate",
     "seed": "sequelize db:seed:all",
     "undo": "sequelize db:migrate:undo"
@@ -48,6 +49,8 @@
     "@eslint/js": "^9.33.0",
     "eslint": "^9.33.0",
     "globals": "^16.3.0",
-    "sequelize-cli": "^6.6.3"
+    "sequelize-cli": "^6.6.3",
+    "supertest": "^7.2.2",
+    "vitest": "^4.1.10"
   }
 }

@@ -38,12 +38,11 @@ function api(res, code, { err = null, req = null } = {}) {
             err.errors[0]?.path || 'unique constraint violated'
          }`
       } else if (err instanceof ZodError) {
-      // Handle Zod validation errors
-         const firstError = err.errors[0]
+         const firstError = err.issues?.[0] || err.errors?.[0]
          message =
-        firstError.path.length > 0
+        firstError && firstError.path.length > 0
            ? `${firstError.path.join('.')}: ${firstError.message}`
-           : firstError.message
+           : firstError?.message || err.message
       } else if (err.name === 'schema-validator' && Array.isArray(err)) {
       // Handle custom validation errors
          message = err[0].msg
@@ -83,7 +82,7 @@ function api(res, code, { err = null, req = null } = {}) {
    }
 
    return {
-      success: code === HttpStatusCode.Ok,
+      success: code >= 200 && code < 300,
       message: message,
       metadata: metadata,
       data: res
