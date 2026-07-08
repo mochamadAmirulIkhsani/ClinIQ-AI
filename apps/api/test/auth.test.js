@@ -10,10 +10,14 @@ const db = require('../db/models')
 const bcrypt = require('../src/utils/bcrypt')
 
 const TEST_PASSWORD = 'Password123'
+const NEW_PASSWORD = 'NewPassword123'
 const TEST_EMAILS = [
    'auth-register@example.test',
+   'auth-register-hidden@example.test',
    'auth-login@example.test',
-   'auth-inactive@example.test'
+   'auth-inactive@example.test',
+   'auth-password@example.test',
+   'auth-unknown@example.test'
 ]
 
 async function ensureUserRole() {
@@ -39,16 +43,29 @@ async function cleanupUsers() {
    })
 }
 
-async function createUser({ email, status = true }) {
+async function createUser({ email, status = true, password = TEST_PASSWORD }) {
    const role = await ensureUserRole()
 
    return db.user.create({
       name: 'Auth Test User',
       email,
-      password: bcrypt.hashPassword(TEST_PASSWORD),
+      password: bcrypt.hashPassword(password),
       role_id: role.id,
       status
    })
+}
+
+async function login(email, password = TEST_PASSWORD) {
+   return request(app).post('/api/v1/auth/login').send({
+      email,
+      password
+   })
+}
+
+async function loginCookie(email, password = TEST_PASSWORD) {
+   const response = await login(email, password)
+
+   return tokenCookieFrom(response)
 }
 
 function tokenCookieFrom(response) {
@@ -75,7 +92,7 @@ describe('auth API', () => {
       await db.sequelize.close()
    })
 
-   it('registers a user with default User role and does not expose password', async () => {
+   it('registers a user successfully', async () => {
       const response = await request(app).post('/api/v1/auth').send({
          name: 'Auth Register',
          email: 'auth-register@example.test',
@@ -92,18 +109,17 @@ describe('auth API', () => {
       })
       expect(response.body.data.id).toBeTruthy()
       expect(response.body.data.role_id).toBeTruthy()
-      expect(response.body.data.password).toBeUndefined()
 
       const savedUser = await db.user.findOne({
          where: { email: 'auth-register@example.test' }
       })
 
       expect(savedUser).toBeTruthy()
-      expect(savedUser.password).not.toBe(TEST_PASSWORD)
+      expect(savedUser.email).toBe('auth-register@example.test')
       expect(bcrypt.compare(TEST_PASSWORD, savedUser.password)).toBe(true)
    })
 
-   it('rejects duplicate email registration', async () => {
+   it('register rejects duplicate email', async () => {
       await createUser({ email: 'auth-register@example.test' })
 
       const response = await request(app).post('/api/v1/auth').send({
@@ -118,7 +134,7 @@ describe('auth API', () => {
       expect(response.body.data).toBeNull()
    })
 
-   it('rejects invalid register payload', async () => {
+   it('register rejects invalid payload', async () => {
       const response = await request(app).post('/api/v1/auth').send({
          name: '',
          email: 'not-an-email',
@@ -131,15 +147,23 @@ describe('auth API', () => {
       expect(response.body.data).toBeNull()
    })
 
-   it('logs in an active user and sets an httpOnly token cookie', async () => {
-      await createUser({ email: 'auth-login@example.test' })
-
-      const response = await request(app).post('/api/v1/auth/login').send({
-         email: 'auth-login@example.test',
+   it('register does not expose password hash', async () => {
+      const response = await request(app).post('/api/v1/auth').send({
+         name: 'Hidden Password User',
+         email: 'auth-register-hidden@example.test',
          password: TEST_PASSWORD
       })
 
-      const cookies = response.headers['set-cookie'] || []
+      expect(response.status).toBe(201)
+      expect(response.body.data.password).toBeUndefined()
+      expect(JSON.stringify(response.body)).not.toContain('$2')
+      expect(JSON.stringify(response.body)).not.toContain(TEST_PASSWORD)
+   })
+
+   it('login successfully with valid email/password', async () => {
+      await createUser({ email: 'auth-login@example.test' })
+
+      const response = await login('auth-login@example.test')
 
       expect(response.status).toBe(200)
       expect(response.body.success).toBe(true)
@@ -148,18 +172,34 @@ describe('auth API', () => {
          name: 'Auth Test User',
          is_superadmin: false
       })
+      expect(response.body.data.id).toBeTruthy()
       expect(response.body.data.password).toBeUndefined()
+   })
+
+   it('login sets httpOnly token cookie', async () => {
+      await createUser({ email: 'auth-login@example.test' })
+
+      const response = await login('auth-login@example.test')
+      const cookies = response.headers['set-cookie'] || []
+
+      expect(response.status).toBe(200)
       expect(cookies.some((cookie) => cookie.startsWith('token='))).toBe(true)
       expect(cookies.some((cookie) => cookie.includes('HttpOnly'))).toBe(true)
    })
 
-   it('rejects login with wrong password', async () => {
+   it('login rejects unknown email', async () => {
+      const response = await login('auth-unknown@example.test')
+
+      expect(response.status).toBe(401)
+      expect(response.body.success).toBe(false)
+      expect(response.body.message).toBe('User is not registered')
+      expect(response.body.data).toBeNull()
+   })
+
+   it('login rejects wrong password', async () => {
       await createUser({ email: 'auth-login@example.test' })
 
-      const response = await request(app).post('/api/v1/auth/login').send({
-         email: 'auth-login@example.test',
-         password: 'WrongPassword123'
-      })
+      const response = await login('auth-login@example.test', 'WrongPassword123')
 
       expect(response.status).toBe(401)
       expect(response.body.success).toBe(false)
@@ -167,16 +207,13 @@ describe('auth API', () => {
       expect(response.body.data).toBeNull()
    })
 
-   it('rejects login for inactive user', async () => {
+   it('login rejects inactive user', async () => {
       await createUser({
          email: 'auth-inactive@example.test',
          status: false
       })
 
-      const response = await request(app).post('/api/v1/auth/login').send({
-         email: 'auth-inactive@example.test',
-         password: TEST_PASSWORD
-      })
+      const response = await login('auth-inactive@example.test')
 
       expect(response.status).toBe(401)
       expect(response.body.success).toBe(false)
@@ -184,7 +221,7 @@ describe('auth API', () => {
       expect(response.body.data).toBeNull()
    })
 
-   it('rejects current user request without token cookie', async () => {
+   it('GET /api/v1/auth/me rejects missing token', async () => {
       const response = await request(app).get('/api/v1/auth/me')
 
       expect(response.status).toBe(401)
@@ -193,16 +230,21 @@ describe('auth API', () => {
       expect(response.body.data).toBeNull()
    })
 
-   it('returns current user with valid token cookie', async () => {
+   it('GET /api/v1/auth/me rejects invalid token', async () => {
+      const response = await request(app)
+         .get('/api/v1/auth/me')
+         .set('Cookie', 'token=invalid-token')
+
+      expect(response.status).toBe(401)
+      expect(response.body.success).toBe(false)
+      expect(response.body.message).toBe('Unauthorized, invalid token')
+      expect(response.body.data).toBeNull()
+   })
+
+   it('GET /api/v1/auth/me returns current user with valid cookie', async () => {
       await createUser({ email: 'auth-login@example.test' })
 
-      const loginResponse = await request(app).post('/api/v1/auth/login').send({
-         email: 'auth-login@example.test',
-         password: TEST_PASSWORD
-      })
-
-      const cookie = tokenCookieFrom(loginResponse)
-
+      const cookie = await loginCookie('auth-login@example.test')
       const response = await request(app)
          .get('/api/v1/auth/me')
          .set('Cookie', cookie)
@@ -220,16 +262,10 @@ describe('auth API', () => {
       expect(response.body.data.password).toBeUndefined()
    })
 
-   it('clears token cookie on logout', async () => {
+   it('logout clears token cookie', async () => {
       await createUser({ email: 'auth-login@example.test' })
 
-      const loginResponse = await request(app).post('/api/v1/auth/login').send({
-         email: 'auth-login@example.test',
-         password: TEST_PASSWORD
-      })
-
-      const cookie = tokenCookieFrom(loginResponse)
-
+      const cookie = await loginCookie('auth-login@example.test')
       const response = await request(app)
          .post('/api/v1/auth/logout')
          .set('Cookie', cookie)
@@ -240,5 +276,133 @@ describe('auth API', () => {
       expect(response.body.success).toBe(true)
       expect(response.body.data).toBe(true)
       expect(cookies.some((item) => item.startsWith('token=;'))).toBe(true)
+   })
+
+   it('change password succeeds with correct old password', async () => {
+      await createUser({ email: 'auth-password@example.test' })
+
+      const cookie = await loginCookie('auth-password@example.test')
+      const response = await request(app)
+         .put('/api/v1/auth/change-password')
+         .set('Cookie', cookie)
+         .send({
+            old_password: TEST_PASSWORD,
+            new_password: NEW_PASSWORD,
+            confirm_password: NEW_PASSWORD
+         })
+
+      expect(response.status).toBe(200)
+      expect(response.body.success).toBe(true)
+      expect(response.body.data).toBe(true)
+
+      const savedUser = await db.user.findOne({
+         where: { email: 'auth-password@example.test' }
+      })
+
+      expect(bcrypt.compare(NEW_PASSWORD, savedUser.password)).toBe(true)
+   })
+
+   it('change password rejects wrong old password', async () => {
+      await createUser({ email: 'auth-password@example.test' })
+
+      const cookie = await loginCookie('auth-password@example.test')
+      const response = await request(app)
+         .put('/api/v1/auth/change-password')
+         .set('Cookie', cookie)
+         .send({
+            old_password: 'WrongPassword123',
+            new_password: NEW_PASSWORD,
+            confirm_password: NEW_PASSWORD
+         })
+
+      expect(response.status).toBe(400)
+      expect(response.body.success).toBe(false)
+      expect(response.body.message).toBe('Old password is incorrect')
+      expect(response.body.data).toBeNull()
+   })
+
+   it('change password rejects weak new password', async () => {
+      await createUser({ email: 'auth-password@example.test' })
+
+      const cookie = await loginCookie('auth-password@example.test')
+      const response = await request(app)
+         .put('/api/v1/auth/change-password')
+         .set('Cookie', cookie)
+         .send({
+            old_password: TEST_PASSWORD,
+            new_password: 'weakpass',
+            confirm_password: 'weakpass'
+         })
+
+      expect(response.status).toBe(400)
+      expect(response.body.success).toBe(false)
+      expect(response.body.message).toBeTruthy()
+      expect(response.body.data).toBeNull()
+   })
+
+   it('change password rejects same old/new password', async () => {
+      await createUser({ email: 'auth-password@example.test' })
+
+      const cookie = await loginCookie('auth-password@example.test')
+      const response = await request(app)
+         .put('/api/v1/auth/change-password')
+         .set('Cookie', cookie)
+         .send({
+            old_password: TEST_PASSWORD,
+            new_password: TEST_PASSWORD,
+            confirm_password: TEST_PASSWORD
+         })
+
+      expect(response.status).toBe(400)
+      expect(response.body.success).toBe(false)
+      expect(response.body.message).toBe(
+         'New password must be different from old password'
+      )
+      expect(response.body.data).toBeNull()
+   })
+
+   it('old password no longer works after change', async () => {
+      await createUser({ email: 'auth-password@example.test' })
+
+      const cookie = await loginCookie('auth-password@example.test')
+
+      await request(app)
+         .put('/api/v1/auth/change-password')
+         .set('Cookie', cookie)
+         .send({
+            old_password: TEST_PASSWORD,
+            new_password: NEW_PASSWORD,
+            confirm_password: NEW_PASSWORD
+         })
+         .expect(200)
+
+      const response = await login('auth-password@example.test', TEST_PASSWORD)
+
+      expect(response.status).toBe(401)
+      expect(response.body.success).toBe(false)
+      expect(response.body.message).toBe('Invalid email or password')
+   })
+
+   it('new password works after change', async () => {
+      await createUser({ email: 'auth-password@example.test' })
+
+      const cookie = await loginCookie('auth-password@example.test')
+
+      await request(app)
+         .put('/api/v1/auth/change-password')
+         .set('Cookie', cookie)
+         .send({
+            old_password: TEST_PASSWORD,
+            new_password: NEW_PASSWORD,
+            confirm_password: NEW_PASSWORD
+         })
+         .expect(200)
+
+      const response = await login('auth-password@example.test', NEW_PASSWORD)
+
+      expect(response.status).toBe(200)
+      expect(response.body.success).toBe(true)
+      expect(response.body.data.email).toBe('auth-password@example.test')
+      expect(tokenCookieFrom(response)).toContain('token=')
    })
 })
