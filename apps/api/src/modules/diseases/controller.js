@@ -15,6 +15,8 @@ class Controller {
 
          const limit = Math.min(parseInt(req.query.limit) || 10, 25)
          const cacheKey = `diseases:search:${q}:${limit}`
+         const startsWithPattern = `${q}%`
+         const containsPattern = `%${q}%`
 
          const cached = await getCache(cacheKey)
          if (cached) {
@@ -28,8 +30,8 @@ class Controller {
          const rows = await db.Disease.findAll({
             where: {
                [Op.or]: [
-                  { name: { [Op.iLike]: `${q}%` } }, // Starts with q
-                  { name: { [Op.iLike]: `%${q}%` } } // Contains q
+                  { name: { [Op.iLike]: startsWithPattern } },
+                  { name: { [Op.iLike]: containsPattern } }
                ]
             },
             attributes: ['id', 'icd_code', 'name'],
@@ -37,7 +39,9 @@ class Controller {
             order: [
                [
                   db.sequelize.literal(
-                     `CASE WHEN "Disease"."name" ILIKE '${q}%' THEN 0 ELSE 1 END`
+                     `CASE WHEN "Disease"."name" ILIKE ${db.sequelize.escape(
+                        startsWithPattern
+                     )} THEN 0 ELSE 1 END`
                   ),
                   'ASC'
                ],
