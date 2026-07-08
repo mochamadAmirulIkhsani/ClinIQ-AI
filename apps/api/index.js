@@ -11,30 +11,27 @@ const swaggerSpec = require('./src/config/swagger')
 const { apiReference } = require('@scalar/express-api-reference')
 const db = require('./db/models')
 
-const mode = process.env.NODE_ENV || 'development'
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
-   .split(',')
-   .map((origin) => origin.trim())
-   .filter(Boolean)
+function getAllowedOrigins() {
+   return (process.env.ALLOWED_ORIGINS || '')
+      .split(',')
+      .map((origin) => origin.trim())
+      .filter(Boolean)
+}
 
 const corsOptions = (req, callback) => {
+   const mode = process.env.NODE_ENV || 'development'
    const origin = req.headers.origin
+   const allowedOrigins = getAllowedOrigins()
 
-   if (mode !== 'local' && origin && allowedOrigins.includes(origin)) {
-      callback(null, { origin: true, credentials: true })
-   } else if (mode === 'local') {
-      callback(null, { origin: true, credentials: true })
-   } else {
-      const res = req.res || req.socket?.parser?.incoming?.res
-      if (res && typeof res.status === 'function') {
-         return res.status(500).json({
-            success: false,
-            message: 'Not allowed by CORS',
-            data: null
-         })
-      }
-      callback(new Error('Not allowed by CORS'))
+   if (mode === 'local') {
+      return callback(null, { origin: true, credentials: true })
    }
+
+   if (origin && allowedOrigins.includes(origin)) {
+      return callback(null, { origin: true, credentials: true })
+   }
+
+   return callback(null, { origin: false, credentials: false })
 }
 
 app.use(morgan('dev'))
