@@ -201,6 +201,23 @@ describe('auth API', () => {
       expect(decoded.exp).toBeGreaterThan(decoded.iat)
    })
 
+   it('jwt helper falls back to default expiration for invalid env value', async () => {
+      const OLD_JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN
+      process.env.JWT_EXPIRES_IN = 'banana'
+
+      delete require.cache[require.resolve('../../src/utils/jwt')]
+      const JwtHelper = require('../../src/utils/jwt')
+
+      const token = JwtHelper.generateToken({ id: 'jwt-test-user' })
+      const decoded = JwtHelper.decodeToken(token)
+
+      process.env.JWT_EXPIRES_IN = OLD_JWT_EXPIRES_IN
+      delete require.cache[require.resolve('../../src/utils/jwt')]
+
+      expect(decoded.exp).toBeTruthy()
+      expect(decoded.exp).toBeGreaterThan(decoded.iat)
+   })
+
    it('login rejects unknown email', async () => {
       const response = await login('auth-unknown@example.test')
 

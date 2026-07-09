@@ -197,4 +197,19 @@ describe('diseases search API', () => {
       expect(response.body.success).toBe(false)
       expect(response.body.message).toBe('Search query is too long')
    })
+
+   it('returns generic error message when search fails', async () => {
+      const spy = vi.spyOn(db.Disease, 'findAll').mockRejectedValue(
+         new Error('secret database detail')
+      )
+
+      const response = await search({ q: 'zztest' })
+
+      spy.mockRestore()
+
+      expect(response.status).toBe(500)
+      expect(response.body.success).toBe(false)
+      expect(response.body.message).toBe('Search failed')
+      expect(JSON.stringify(response.body)).not.toContain('secret database detail')
+   })
 })

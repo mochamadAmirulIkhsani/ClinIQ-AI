@@ -85,4 +85,18 @@ describe('health API', () => {
       expect(allChecksHealthy).toBe(true)
       expect(response.body.success).toBe(true)
    })
+
+   it('health endpoint is rate limited', async () => {
+      let response
+
+      for (let index = 0; index < 61; index += 1) {
+         response = await request(app).get('/health')
+      }
+
+      expect(response.status).toBe(429)
+      expect(response.body.success).toBe(false)
+      expect(response.body.message).toBe(
+         'Too many health check requests. Please try again later.'
+      )
+   })
 })
