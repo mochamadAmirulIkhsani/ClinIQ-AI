@@ -38,8 +38,8 @@ describe('health API', () => {
       expectHealthyResponse(response)
    })
 
-   it('GET /api/health returns 200 when Postgres and Redis are healthy', async () => {
-      const response = await request(app).get('/api/health')
+   it('GET /health returns 200 when Postgres and Redis are healthy', async () => {
+      const response = await request(app).get('/health')
 
       expectHealthyResponse(response)
    })

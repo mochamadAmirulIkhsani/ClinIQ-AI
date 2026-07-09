@@ -187,4 +187,14 @@ describe('diseases search API', () => {
       expect(response.body.success).toBe(true)
       expect(Array.isArray(response.body.data)).toBe(true)
    })
+
+   it('rejects overly long search query', async () => {
+      const response = await search({
+         q: 'a'.repeat(101)
+      })
+
+      expect(response.status).toBe(400)
+      expect(response.body.success).toBe(false)
+      expect(response.body.message).toBe('Search query is too long')
+   })
 })

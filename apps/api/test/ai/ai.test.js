@@ -16,7 +16,6 @@ const TEST_PASSWORD = 'Password123'
 const TEST_EMAIL = 'ai-user@example.test'
 const TEST_DISEASE_CODE = 'T-AI-001'
 
-let user
 let cookie
 let role
 let disease
@@ -123,7 +122,7 @@ describe('AI explanation API', () => {
    beforeEach(async () => {
       await cleanupAIData()
 
-      user = await createUser()
+      await createUser()
       disease = await createDisease()
       cookie = await loginCookie()
    })

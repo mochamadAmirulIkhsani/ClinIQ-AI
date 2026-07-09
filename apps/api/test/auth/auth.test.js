@@ -8,6 +8,7 @@ const { Op } = require('sequelize')
 const app = require('../../index')
 const db = require('../../db/models')
 const bcrypt = require('../../src/utils/bcrypt')
+const jwt = require('jsonwebtoken')
 
 const TEST_PASSWORD = 'Password123'
 const NEW_PASSWORD = 'NewPassword123'
@@ -184,6 +185,20 @@ describe('auth API', () => {
       expect(response.status).toBe(200)
       expect(cookies.some((cookie) => cookie.startsWith('token='))).toBe(true)
       expect(cookies.some((cookie) => cookie.includes('HttpOnly'))).toBe(true)
+   })
+
+   it('login token includes expiration claim', async () => {
+      await createUser({ email: 'auth-login@example.test' })
+
+      const response = await login('auth-login@example.test')
+      const cookie = tokenCookieFrom(response)
+      const token = cookie.replace('token=', '')
+      const decoded = jwt.decode(token)
+
+      expect(response.status).toBe(200)
+      expect(decoded.exp).toBeTruthy()
+      expect(decoded.iat).toBeTruthy()
+      expect(decoded.exp).toBeGreaterThan(decoded.iat)
    })
 
    it('login rejects unknown email', async () => {

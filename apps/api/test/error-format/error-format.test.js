@@ -113,7 +113,7 @@ describe('error format regression', () => {
       expect(response.status).toBe(500)
       expectStandardShape(response.body)
       expect(response.body.success).toBe(false)
-      expect(response.body.message).toBe('Duplicate entry: email')
+      expect(response.body.message).toBe('Terjadi kesalahan. Silakan coba lagi.')
       expect(response.body.data).toBeNull()
       expect(JSON.stringify(response.body)).not.toContain('SequelizeUniqueConstraintError')
       expect(JSON.stringify(response.body)).not.toContain('stack')

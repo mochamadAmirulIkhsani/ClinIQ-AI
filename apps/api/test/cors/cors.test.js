@@ -19,9 +19,9 @@ describe('CORS', () => {
       restoreEnv()
    })
 
-   it('local mode allows origin', async () => {
+   it('local mode allows origin when wildcard is explicit', async () => {
       process.env.NODE_ENV = 'local'
-      process.env.ALLOWED_ORIGINS = ''
+      process.env.ALLOWED_ORIGINS = '*'
 
       const response = await request(app)
          .get('/api/status')
@@ -56,6 +56,19 @@ describe('CORS', () => {
       const response = await request(app)
          .get('/api/status')
          .set('Origin', 'https://evil.example.com')
+
+      expect(response.status).toBe(200)
+      expect(response.headers['access-control-allow-origin']).toBeUndefined()
+      expect(response.headers['access-control-allow-credentials']).toBeUndefined()
+   })
+
+   it('non-local mode rejects wildcard origin', async () => {
+      process.env.NODE_ENV = 'production'
+      process.env.ALLOWED_ORIGINS = '*'
+
+      const response = await request(app)
+         .get('/api/status')
+         .set('Origin', 'https://cliniq.example.com')
 
       expect(response.status).toBe(200)
       expect(response.headers['access-control-allow-origin']).toBeUndefined()
