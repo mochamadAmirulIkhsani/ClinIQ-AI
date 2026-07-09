@@ -23,11 +23,11 @@ services:
     image: redis:7-alpine
     container_name: cliniq-ai-redis
     command:
-      [
-        "sh",
-        "-c",
-        'redis-server --appendonly yes --requirepass "$${REDIS_PASSWORD}"',
-      ]
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --requirepass
+      - ${REDIS_PASSWORD:?set REDIS_PASSWORD}
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD:?set REDIS_PASSWORD}
     ports:

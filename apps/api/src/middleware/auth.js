@@ -3,10 +3,6 @@ const JWT = require('../utils/jwt')
 const db = require('../../db/models')
 const { api } = require('../utils/api')
 
-/**
- * Authorization middleware for role-based access
- * @param {...string} roles - Allowed roles
- */
 const authorize = (...roles) => {
    return (req, res, next) => {
       if (!req.user) {
@@ -89,7 +85,6 @@ const authentication = async (req, res, next) => {
 
       next()
    } catch (err) {
-      console.error(err)
       err.code = err.code ?? HttpStatusCode.InternalServerError
 
       if (err.name === 'JsonWebTokenError') {

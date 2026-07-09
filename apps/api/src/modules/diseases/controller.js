@@ -67,7 +67,7 @@ class Controller {
          const code = err.code || HttpStatusCode.InternalServerError
          res.status(code).json({
             success: false,
-            message: err.message
+            message: 'Search failed'
          })
       }
    }

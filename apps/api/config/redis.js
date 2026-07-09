@@ -1,19 +1,6 @@
-const fs = require('fs')
-const path = require('path')
-const dotenv = require('dotenv')
+require('dotenv').config()
+
 const Redis = require('ioredis')
-
-dotenv.config()
-
-const rootEnvPath = path.resolve(__dirname, '../../../.env')
-
-if (fs.existsSync(rootEnvPath)) {
-   const rootEnv = dotenv.parse(fs.readFileSync(rootEnvPath))
-
-   if (!process.env.REDIS_PASSWORD && rootEnv.REDIS_PASSWORD) {
-      process.env.REDIS_PASSWORD = rootEnv.REDIS_PASSWORD
-   }
-}
 
 const redisConfig = {
    host: process.env.REDIS_HOST || '127.0.0.1',

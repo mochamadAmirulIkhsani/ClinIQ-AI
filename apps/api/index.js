@@ -67,7 +67,19 @@ app.use(
 )
 app.use(express.json({ limit: '50mb' }))
 
-app.use('/health', require('./src/modules/health'))
+const healthRateLimiter = rateLimit({
+   windowMs: 60 * 1000,
+   max: 60,
+   standardHeaders: true,
+   legacyHeaders: false,
+   message: {
+      success: false,
+      message: 'Too many health check requests. Please try again later.',
+      data: null
+   }
+})
+
+app.use('/health', healthRateLimiter, require('./src/modules/health'))
 
 app.use('/api', route)
 app.use('/reference', apiReference({ spec: { content: swaggerSpec } }))

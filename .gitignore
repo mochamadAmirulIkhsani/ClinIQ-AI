@@ -40,3 +40,4 @@ yarn-error.log*
 # markdown files
 apps/api/test-module.md
 apps/api/api-audit.md
+apps/web/frontend-api-audit.md
