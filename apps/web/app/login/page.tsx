@@ -4,18 +4,18 @@ import { LoginForm } from "../_components/auth/login-form";
 
 export const metadata: Metadata = {
   title: "Masuk — clinIQ AI",
-  description: "Masuk ke workspace clinIQ AI.",
+  description: "Masuk ke ruang belajar diagnosis clinIQ AI.",
 };
 
 export default function LoginPage() {
   return (
     <AuthShell
-      eyebrow="akses klinik"
-      title="Masuk ke ruang kerja yang lebih tenang."
-      description="Lanjutkan intake pasien, tinjau draft AI, dan rapikan catatan klinis tanpa kehilangan kendali."
+      eyebrow="diagnostic access"
+      title="Masuk ke ruang diagnosis."
+      description="Lanjutkan latihan membaca clue klinis, pilih dugaan penyakit, lalu pelajari alasan AI saat jawabanmu benar atau meleset."
       alternateText="Belum punya akun?"
       alternateHref="/register"
-      alternateLabel="Daftar workspace"
+      alternateLabel="Buat akun belajar"
     >
       <LoginForm />
     </AuthShell>
