@@ -86,7 +86,7 @@ export function DashboardSidebar() {
 
       <button
         type="button"
-        aria-label="Tutup menu dashboard"
+        aria-label="Tutup backdrop menu dashboard"
         className="diagnostic-menu-backdrop lg:hidden"
         onClick={closeMobileMenu}
       />
