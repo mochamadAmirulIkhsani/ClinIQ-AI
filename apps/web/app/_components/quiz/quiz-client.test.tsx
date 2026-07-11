@@ -2,10 +2,12 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { QuizClient } from "./quiz-client";
 
+const pushMock = vi.fn();
 const replaceMock = vi.fn();
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
+    push: pushMock,
     replace: replaceMock,
   }),
 }));
@@ -151,6 +153,18 @@ describe("QuizClient", () => {
       expect.stringContaining("/api/v1/quiz/daily"),
       expect.any(Object),
     );
+  });
+
+  it("navigates back to dashboard from navbar button", async () => {
+    render(<QuizClient initialMode="daily" />);
+
+    await waitFor(() => {
+      expect(screen.queryByText("Fever for three days")).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /back to dashboard/i }));
+
+    expect(pushMock).toHaveBeenCalledWith("/dashboard");
   });
 
   it("loads random quiz with random header", async () => {
