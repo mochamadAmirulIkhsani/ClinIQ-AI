@@ -5,13 +5,11 @@ applications:
       phases:
         preBuild:
           commands:
-            - corepack enable
-            - corepack prepare pnpm@latest --activate
-            - pnpm install
+            - npm install -g bun
+            - bun install
         build:
           commands:
-            - cd ../..
-            - pnpm turbo run build --filter=web
+            - bunx turbo run build --filter=web
       artifacts:
         baseDirectory: .next
         files:
