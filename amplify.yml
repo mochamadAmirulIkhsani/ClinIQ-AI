@@ -12,9 +12,16 @@ applications:
           commands:
             - bunx turbo run build --filter=web
       artifacts:
-        baseDirectory: .next
+        baseDirectory: .next/standalone/apps/web
         files:
           - '**/*'
+        secondaryArtifacts:
+          - baseDirectory: .next/static
+            files:
+              - '**/*'
+          - baseDirectory: public
+            files:
+              - '**/*'
       cache:
         paths:
           - ../../node_modules/**/*
