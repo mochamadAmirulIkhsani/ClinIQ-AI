@@ -68,8 +68,11 @@ describe("Dashboard page", () => {
               metadata: {
                 per_page: 5,
                 current_page: 1,
-                total_row: 1,
-                total_page: 1,
+                total_row: 10,
+                total_page: 2,
+                completed_attempts: 8,
+                correct_attempts: 6,
+                total_score: 900,
               },
               data: attempts,
             }),
@@ -90,7 +93,22 @@ describe("Dashboard page", () => {
 
     expect(screen.queryByText("diagnostic study desk")).toBeTruthy();
     expect(screen.queryByText("Dengue Fever")).toBeTruthy();
-    expect(screen.queryByText("400")).toBeTruthy();
+    expect(screen.queryByText("400 pts")).toBeTruthy();
+    expect(
+      screen.getByText("Total Attempts").closest("article"),
+    ).toHaveTextContent("10");
+
+    expect(
+      screen.getByText("Correct Cases").closest("article"),
+    ).toHaveTextContent("6");
+
+    expect(screen.getByText("Win Rate").closest("article")).toHaveTextContent(
+      "75%",
+    );
+
+    expect(screen.getByText("Score").closest("article")).toHaveTextContent(
+      "900",
+    );
     expect(replaceMock).not.toHaveBeenCalled();
   });
 
