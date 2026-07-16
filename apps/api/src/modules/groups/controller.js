@@ -5,10 +5,6 @@ function normalizeInviteCode(value) {
    return typeof value === 'string' ? value.trim().toUpperCase() : ''
 }
 
-function normalizeInviteCode(value) {
-   return typeof value === 'string' ? value.trim().toUpperCase() : ''
-}
-
 async function addGroupMember(group, userId) {
    const existing = await db.GroupMember.findOne({
       where: {
