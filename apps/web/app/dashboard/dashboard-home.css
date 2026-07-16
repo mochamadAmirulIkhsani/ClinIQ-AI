@@ -93,35 +93,6 @@
   white-space: nowrap;
 }
 
-.diagnostic-group-status {
-  min-width: 0;
-  border: 1px solid var(--auth-line);
-  border-radius: 0.9rem;
-  background: rgba(255, 249, 238, 0.76);
-  padding: 0.72rem 0.85rem;
-}
-
-.diagnostic-group-status span {
-  flex: 0 0 auto;
-  color: var(--auth-muted);
-  font-family: var(--font-mono), monospace;
-  font-size: 0.62rem;
-  font-weight: 750;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
-}
-
-.diagnostic-group-status strong {
-  min-width: 0;
-  overflow: hidden;
-  color: var(--auth-ink);
-  font-size: 0.86rem;
-  font-weight: 900;
-  text-align: right;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .diagnostic-stat-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -185,10 +156,15 @@
   align-content: end;
   gap: 0.75rem;
   overflow: hidden;
+  cursor: pointer;
+  appearance: none;
   border: 1px solid var(--auth-line);
   border-radius: var(--auth-radius);
   background: rgba(255, 249, 238, 0.64);
+  color: inherit;
+  font: inherit;
   padding: 1rem;
+  text-align: left;
   transition:
     border-color 180ms ease,
     background 180ms ease,
@@ -325,9 +301,5 @@
 
   .diagnostic-profile-stack {
     width: 100%;
-  }
-
-  .diagnostic-group-status strong {
-    max-width: 65%;
   }
 }

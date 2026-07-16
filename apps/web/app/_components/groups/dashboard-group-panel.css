@@ -1,0 +1,133 @@
+.dashboard-group-panel {
+  min-width: 0;
+}
+
+.dashboard-group-status {
+  min-width: 0;
+  border: 1px solid var(--auth-line);
+  border-radius: 0.9rem;
+  background: rgba(255, 249, 238, 0.76);
+  padding: 0.72rem 0.85rem;
+}
+
+.dashboard-group-status > span,
+.dashboard-group-members__header > span {
+  flex: 0 0 auto;
+  color: var(--auth-muted);
+  font-family: var(--font-mono), monospace;
+  font-size: 0.62rem;
+  font-weight: 750;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.dashboard-group-status > strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--auth-ink);
+  font-size: 0.86rem;
+  font-weight: 900;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-group-members {
+  min-width: 0;
+  border: 1px solid var(--auth-line);
+  border-radius: 0.9rem;
+  background: rgba(255, 249, 238, 0.76);
+  padding: 0.75rem;
+}
+
+.dashboard-group-members__header {
+  border-bottom: 1px solid var(--auth-line);
+  padding-bottom: 0.65rem;
+}
+
+.dashboard-group-members__header > strong {
+  font-family: var(--font-display), serif;
+  font-size: 1.35rem;
+  font-weight: 900;
+  line-height: 0.8;
+}
+
+.dashboard-group-members__list {
+  max-height: 12rem;
+  margin: 0.7rem 0 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.dashboard-group-member {
+  min-width: 0;
+  border-radius: 0.75rem;
+  background: rgba(15, 95, 92, 0.06);
+  padding: 0.55rem;
+}
+
+.dashboard-group-member__avatar {
+  display: grid;
+  flex: 0 0 auto;
+  width: 2rem;
+  aspect-ratio: 1;
+  place-items: center;
+  border-radius: var(--auth-radius-blob);
+  background: var(--auth-teal);
+  color: var(--auth-cream);
+  font-family: var(--font-display), serif;
+  font-weight: 900;
+}
+
+.dashboard-group-member__identity {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+}
+
+.dashboard-group-member__identity strong,
+.dashboard-group-member__identity small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-group-member__identity strong {
+  font-size: 0.8rem;
+  font-weight: 900;
+}
+
+.dashboard-group-member__identity small {
+  margin-top: 0.1rem;
+  color: var(--auth-muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.dashboard-group-member__role {
+  flex: 0 0 auto;
+  color: var(--auth-teal-dark);
+  font-family: var(--font-mono), monospace;
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dashboard-group-members__empty {
+  margin: 0.7rem 0 0;
+  color: var(--auth-muted);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+@media (max-width: 720px) {
+  .dashboard-group-status > strong {
+    max-width: 65%;
+  }
+
+  .dashboard-group-members__list {
+    max-height: 15rem;
+  }
+}

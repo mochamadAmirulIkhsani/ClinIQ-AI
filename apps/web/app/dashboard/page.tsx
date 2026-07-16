@@ -9,10 +9,17 @@ import {
   type PaginationMetadata,
   type QuizAttemptHistory,
 } from "../_lib/quiz-api";
-import { getMyGroups, type GroupSummary } from "../_lib/groups-api";
+import {
+  getGroupById,
+  getMyGroups,
+  type GroupDetails,
+  type GroupSummary,
+} from "../_lib/groups-api";
 
 import "./dashboard-home.css";
 import { DashboardHistory } from "../_components/dashboard/dashboard-history";
+import { DashboardGroupPanel } from "../_components/groups/dashboard-group-panel";
+import { GroupMembershipModal } from "../_components/groups/group-membership-modal";
 
 const scoreFormatter = new Intl.NumberFormat("id-ID");
 const HISTORY_PAGE_SIZE = 3;
@@ -28,6 +35,7 @@ type DashboardState = {
   user: AuthUser;
   attempts: QuizAttemptHistory[];
   group: GroupSummary | null;
+  groupDetails: GroupDetails | null;
   stats: DashboardStats;
   currentPage: number;
   totalPages: number;
@@ -45,12 +53,6 @@ const quizActions = [
     label: "Random Quiz",
     eyebrow: "new case",
     copy: "Ambil vignette acak yang belum pernah kamu kerjakan.",
-  },
-  {
-    href: "/groups/join",
-    label: "Join Group",
-    eyebrow: "study circle",
-    copy: "Masuk ke grup belajar untuk leaderboard dan latihan bersama.",
   },
 ];
 
@@ -99,6 +101,7 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [historyError, setHistoryError] = useState("");
+  const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -113,13 +116,19 @@ export default function DashboardPage() {
           })),
           getMyGroups().catch(() => []),
         ]);
+        const group = groups[0] ?? null;
+
+        const groupDetails = group
+          ? await getGroupById(group.id).catch(() => null)
+          : null;
 
         if (!isMounted) return;
 
         setState({
           user,
           attempts: attemptsResult.data,
-          group: groups[0] ?? null,
+          group,
+          groupDetails,
           stats: buildDashboardStats(
             attemptsResult.data,
             attemptsResult.metadata,
@@ -183,6 +192,33 @@ export default function DashboardPage() {
     }
   }
 
+  function handleGroupJoined(
+    group: GroupSummary,
+    groupDetails: GroupDetails | null,
+  ) {
+    setState((current) => {
+      if (!current) return current;
+
+      return {
+        ...current,
+        group,
+        groupDetails,
+      };
+    });
+  }
+
+  function handleGroupLeft() {
+    setState((current) => {
+      if (!current) return current;
+
+      return {
+        ...current,
+        group: null,
+        groupDetails: null,
+      };
+    });
+  }
+
   if (isLoading) {
     return (
       <section className="diagnostic-panel diagnostic-loading">
@@ -200,7 +236,15 @@ export default function DashboardPage() {
     );
   }
 
-  const { user, attempts, group, stats, currentPage, totalPages } = state;
+  const {
+    user,
+    attempts,
+    group,
+    groupDetails,
+    stats,
+    currentPage,
+    totalPages,
+  } = state;
   const roleName = getRoleName(user);
 
   return (
@@ -226,17 +270,7 @@ export default function DashboardPage() {
             <small>{user.email}</small>
           </div>
 
-          <div
-            className="diagnostic-group-status flex items-center justify-between gap-3"
-            aria-label={
-              group
-                ? `Grup belajar: ${group.name}`
-                : "Mode belajar: Solo player"
-            }
-          >
-            <span>{group ? "study group" : "play mode"}</span>
-            <strong>{group?.name ?? "Solo player"}</strong>
-          </div>
+          <DashboardGroupPanel group={group} details={groupDetails} />
         </div>
       </div>
 
@@ -275,6 +309,19 @@ export default function DashboardPage() {
                 <p>{action.copy}</p>
               </Link>
             ))}
+            <button
+              type="button"
+              className="dashboard-action-card"
+              onClick={() => setIsGroupModalOpen(true)}
+            >
+              <span>study circle</span>
+              <strong>{group ? "Leave Group" : "Join Group"}</strong>
+              <p>
+                {group
+                  ? `Keluar dari ${group.name} dan kembali belajar secara solo.`
+                  : "Masuk ke grup belajar untuk leaderboard dan latihan bersama."}
+              </p>
+            </button>
           </div>
         </section>
 
@@ -304,6 +351,13 @@ export default function DashboardPage() {
         isLoadingMore={isLoadingMore}
         error={historyError}
         onLoadMore={handleLoadMore}
+      />
+      <GroupMembershipModal
+        isOpen={isGroupModalOpen}
+        group={group}
+        onClose={() => setIsGroupModalOpen(false)}
+        onJoined={handleGroupJoined}
+        onLeft={handleGroupLeft}
       />
     </section>
   );

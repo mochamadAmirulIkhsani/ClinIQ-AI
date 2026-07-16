@@ -2,6 +2,20 @@ import type { ApiResult } from "./auth-api";
 
 export type GroupRole = "admin" | "member";
 
+export type GroupUser = {
+  id: string;
+  name: string;
+  email: string;
+};
+
+export type GroupMember = {
+  id: string;
+  user_id: string;
+  is_admin: boolean;
+  joined_at: string;
+  user: GroupUser;
+};
+
 export type GroupSummary = {
   id: string;
   name: string;
@@ -13,10 +27,19 @@ export type GroupSummary = {
   createdAt?: string;
 };
 
+export type GroupDetails = GroupSummary & {
+  members: GroupMember[];
+  owner?: GroupUser;
+};
+
 type JoinGroupResponse = {
   message: string;
   group_id: string;
   group: GroupSummary;
+};
+
+type LeaveGroupResponse = {
+  message: string;
 };
 
 const configuredApiBaseUrl = process.env.NEXT_PUBLIC_API_URL?.replace(
@@ -57,6 +80,18 @@ export async function getMyGroups(): Promise<GroupSummary[]> {
   return result.data ?? [];
 }
 
+export async function getGroupById(groupId: string): Promise<GroupDetails> {
+  const result = await requestGroupsApi<GroupDetails>(
+    `/api/v1/groups/${encodeURIComponent(groupId)}`,
+  );
+
+  if (!result.data) {
+    throw new Error(result.message || "Detail grup tidak tersedia.");
+  }
+
+  return result.data;
+}
+
 export async function joinGroupByCode(
   inviteCode: string,
 ): Promise<GroupSummary> {
@@ -75,4 +110,14 @@ export async function joinGroupByCode(
   }
 
   return result.data.group;
+}
+
+export async function leaveGroup(groupId: string): Promise<void> {
+  await requestGroupsApi<LeaveGroupResponse>(
+    `/api/v1/groups/${encodeURIComponent(groupId)}/leave`,
+    {
+      method: "POST",
+      body: JSON.stringify({}),
+    },
+  );
 }
