@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import DashboardPage from "./page";
 
@@ -73,6 +79,34 @@ const groups = [
   },
 ];
 
+const groupDetails = {
+  ...groups[0],
+  members: [
+    {
+      id: "member-1",
+      user_id: "owner-1",
+      is_admin: true,
+      joined_at: "2026-07-10",
+      user: {
+        id: "owner-1",
+        name: "Groups Owner",
+        email: "owner@example.test",
+      },
+    },
+    {
+      id: "member-2",
+      user_id: "user-1",
+      is_admin: false,
+      joined_at: "2026-07-11",
+      user: {
+        id: "user-1",
+        name: "Dok Bakar",
+        email: "dok@email.com",
+      },
+    },
+  ],
+};
+
 describe("Dashboard page", () => {
   beforeEach(() => {
     replaceMock.mockReset();
@@ -111,6 +145,16 @@ describe("Dashboard page", () => {
           );
         }
 
+        if (url.includes("/api/v1/groups/group-1")) {
+          return Promise.resolve(
+            mockApiResponse({
+              success: true,
+              message: "success",
+              data: groupDetails,
+            }),
+          );
+        }
+
         if (url.includes("/api/v1/groups")) {
           return Promise.resolve(
             mockApiResponse({
@@ -137,6 +181,19 @@ describe("Dashboard page", () => {
     expect(screen.getByText("Dengue Fever")).toBeTruthy();
     expect(screen.getByText("400 pts")).toBeTruthy();
     expect(screen.getByText("Kelompok Belajar A")).toBeTruthy();
+    expect(screen.getByText("Groups Owner")).toBeTruthy();
+    expect(screen.getByText("owner@example.test")).toBeTruthy();
+    const memberList = screen.getByRole("list", {
+      name: "Anggota Kelompok Belajar A",
+    });
+
+    expect(within(memberList).getByText("dok@email.com")).toBeTruthy();
+
+    expect(
+      screen.getByRole("button", {
+        name: /leave group/i,
+      }),
+    ).toBeTruthy();
 
     expect(
       screen.getByText("Total Attempts").closest("article"),
@@ -174,10 +231,11 @@ describe("Dashboard page", () => {
       "/quiz?mode=random",
     );
 
-    expect(screen.getByRole("link", { name: /join group/i })).toHaveAttribute(
-      "href",
-      "/groups/join",
-    );
+    expect(
+      screen.getByRole("button", {
+        name: /leave group/i,
+      }),
+    ).toBeTruthy();
   });
 
   it("redirects to login when current user request fails", async () => {
