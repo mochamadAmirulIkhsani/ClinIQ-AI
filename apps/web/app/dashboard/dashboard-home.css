@@ -149,6 +149,10 @@
   margin-top: 1.5rem;
 }
 
+.dashboard-action-grid--compact {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .dashboard-action-card {
   position: relative;
   display: grid;

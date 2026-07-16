@@ -270,7 +270,11 @@ export default function DashboardPage() {
             <small>{user.email}</small>
           </div>
 
-          <DashboardGroupPanel group={group} details={groupDetails} />
+          <DashboardGroupPanel
+            group={group}
+            details={groupDetails}
+            onLeaveGroup={() => setIsGroupModalOpen(true)}
+          />
         </div>
       </div>
 
@@ -293,11 +297,19 @@ export default function DashboardPage() {
           <div className="diagnostic-section-head">
             <div>
               <p className="diagnostic-eyebrow">choose your next move</p>
-              <h2>Mulai latihan atau masuk grup belajar.</h2>
+              <h2>
+                {group
+                  ? "Lanjutkan latihan klinis."
+                  : "Mulai latihan atau masuk grup belajar."}
+              </h2>
             </div>
           </div>
 
-          <div className="dashboard-action-grid">
+          <div
+            className={`dashboard-action-grid${
+              group ? " dashboard-action-grid--compact" : ""
+            }`}
+          >
             {quizActions.map((action) => (
               <Link
                 key={action.href}
@@ -309,19 +321,20 @@ export default function DashboardPage() {
                 <p>{action.copy}</p>
               </Link>
             ))}
-            <button
-              type="button"
-              className="dashboard-action-card"
-              onClick={() => setIsGroupModalOpen(true)}
-            >
-              <span>study circle</span>
-              <strong>{group ? "Leave Group" : "Join Group"}</strong>
-              <p>
-                {group
-                  ? `Keluar dari ${group.name} dan kembali belajar secara solo.`
-                  : "Masuk ke grup belajar untuk leaderboard dan latihan bersama."}
-              </p>
-            </button>
+
+            {!group ? (
+              <button
+                type="button"
+                className="dashboard-action-card"
+                onClick={() => setIsGroupModalOpen(true)}
+              >
+                <span>study circle</span>
+                <strong>Join Group</strong>
+                <p>
+                  Masuk ke grup belajar untuk leaderboard dan latihan bersama.
+                </p>
+              </button>
+            ) : null}
           </div>
         </section>
 

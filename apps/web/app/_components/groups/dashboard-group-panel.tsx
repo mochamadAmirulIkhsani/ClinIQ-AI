@@ -4,16 +4,21 @@ import "./dashboard-group-panel.css";
 type DashboardGroupPanelProps = {
   group: GroupSummary | null;
   details: GroupDetails | null;
+  onLeaveGroup: () => void;
 };
 
 export function DashboardGroupPanel({
   group,
   details,
+  onLeaveGroup,
 }: DashboardGroupPanelProps) {
   const members = details?.members ?? [];
 
   return (
-    <section className="dashboard-group-panel grid gap-2">
+    <section
+      className="dashboard-group-panel grid gap-2"
+      aria-label="Status grup belajar"
+    >
       <div
         className="dashboard-group-status flex items-center justify-between gap-3"
         aria-label={
@@ -64,6 +69,14 @@ export function DashboardGroupPanel({
               Daftar anggota belum tersedia.
             </p>
           )}
+
+          <button
+            type="button"
+            className="dashboard-group-members__leave"
+            onClick={onLeaveGroup}
+          >
+            Leave Group
+          </button>
         </div>
       ) : null}
     </section>
