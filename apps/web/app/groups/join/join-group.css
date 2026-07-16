@@ -1,0 +1,291 @@
+.join-group-screen {
+  background:
+    linear-gradient(rgba(31, 36, 33, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(31, 36, 33, 0.035) 1px, transparent 1px),
+    radial-gradient(
+      circle at 12% 12%,
+      rgba(241, 90, 36, 0.17),
+      transparent 28rem
+    ),
+    radial-gradient(
+      circle at 88% 16%,
+      rgba(27, 60, 255, 0.13),
+      transparent 32rem
+    ),
+    linear-gradient(135deg, var(--auth-paper), var(--auth-paper-warm));
+  background-size:
+    34px 34px,
+    34px 34px,
+    auto,
+    auto,
+    auto;
+  color: var(--auth-ink);
+}
+
+.join-group-shell {
+  min-height: calc(100svh - 2.5rem);
+}
+
+.join-group-intro,
+.join-group-panel {
+  border: 1px solid var(--auth-line);
+  border-radius: var(--auth-radius-soft);
+  animation: auth-rise 620ms var(--auth-ease-out) both;
+}
+
+.join-group-intro {
+  overflow: hidden;
+  background:
+    radial-gradient(
+      circle at 86% 10%,
+      rgba(255, 249, 238, 0.12),
+      transparent 16rem
+    ),
+    linear-gradient(145deg, var(--auth-teal), var(--auth-teal-dark));
+  color: var(--auth-cream);
+  padding: clamp(1.2rem, 3vw, 2.5rem);
+}
+
+.join-group-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: clamp(2rem, 7vw, 5rem);
+  color: rgba(255, 249, 238, 0.76);
+  font-size: 0.88rem;
+  font-weight: 850;
+  transition:
+    color 180ms ease,
+    transform 180ms var(--auth-ease-snap);
+}
+
+.join-group-back:hover,
+.join-group-back:focus-visible {
+  color: var(--auth-cream);
+  outline: 0;
+  transform: translateX(-0.2rem);
+}
+
+.join-group-intro .diagnostic-eyebrow {
+  border-color: rgba(255, 249, 238, 0.26);
+  background: rgba(255, 249, 238, 0.1);
+  color: var(--auth-cream);
+}
+
+.join-group-intro h1 {
+  max-width: 10ch;
+  margin: 0;
+  font-family: var(--font-display), serif;
+  font-size: clamp(3.8rem, 7vw, 7rem);
+  font-weight: 900;
+  line-height: 0.78;
+  letter-spacing: -0.09em;
+}
+
+.join-group-intro__copy {
+  max-width: 42rem;
+  margin: 1.2rem 0 0;
+  color: rgba(255, 249, 238, 0.72);
+  font-size: clamp(0.98rem, 1.5vw, 1.12rem);
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.join-group-steps article {
+  border: 1px solid rgba(255, 249, 238, 0.2);
+  border-radius: 1rem;
+  background: rgba(255, 249, 238, 0.08);
+  padding: 0.9rem;
+}
+
+.join-group-steps article > span,
+.join-group-summary span {
+  color: rgba(255, 249, 238, 0.58);
+  font-family: var(--font-mono), monospace;
+  font-size: 0.64rem;
+  font-weight: 750;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.join-group-steps strong {
+  display: block;
+  margin-top: 0.8rem;
+  font-weight: 900;
+}
+
+.join-group-steps p {
+  margin: 0.45rem 0 0;
+  color: rgba(255, 249, 238, 0.66);
+  font-size: 0.82rem;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.join-group-panel {
+  background: rgba(255, 249, 238, 0.88);
+  padding: clamp(1.2rem, 3vw, 2.5rem);
+}
+
+.join-group-panel h2 {
+  max-width: 11ch;
+  margin: 0;
+  font-family: var(--font-display), serif;
+  font-size: clamp(3rem, 5vw, 5.2rem);
+  font-weight: 900;
+  line-height: 0.8;
+  letter-spacing: -0.085em;
+}
+
+.join-group-panel__copy,
+.join-group-success p {
+  margin: 1rem 0 0;
+  color: var(--auth-ink-soft);
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.join-group-form label {
+  color: var(--auth-muted);
+  font-family: var(--font-mono), monospace;
+  font-size: 0.68rem;
+  font-weight: 750;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.join-group-form input {
+  width: 100%;
+  border: 1px solid var(--auth-line);
+  border-radius: 1rem;
+  background: rgba(255, 249, 238, 0.72);
+  color: var(--auth-ink);
+  font-family: var(--font-mono), monospace;
+  font-size: clamp(1.1rem, 2vw, 1.35rem);
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  outline: 0;
+  padding: 1rem;
+  text-transform: uppercase;
+}
+
+.join-group-form input:focus-visible {
+  border-color: var(--auth-blue);
+  box-shadow: 0 0 0 4px rgba(27, 60, 255, 0.14);
+}
+
+.join-group-submit,
+.join-group-primary-action {
+  display: inline-flex;
+  min-height: 3.2rem;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: 0;
+  border-radius: 999px;
+  background: var(--auth-ink);
+  color: var(--auth-cream);
+  font: inherit;
+  font-weight: 900;
+  padding: 0.9rem 1.2rem;
+  text-align: center;
+  transition:
+    background 180ms ease,
+    transform 180ms var(--auth-ease-snap),
+    opacity 180ms ease;
+}
+
+.join-group-submit:hover,
+.join-group-primary-action:hover {
+  background: var(--auth-teal-dark);
+  transform: translateY(-2px);
+}
+
+.join-group-submit:focus-visible,
+.join-group-primary-action:focus-visible {
+  outline: 3px solid rgba(27, 60, 255, 0.5);
+  outline-offset: 4px;
+}
+
+.join-group-submit:disabled {
+  cursor: wait;
+  opacity: 0.6;
+  transform: none;
+}
+
+.join-group-error {
+  margin: 0;
+  border: 1px solid rgba(199, 67, 23, 0.24);
+  border-radius: 0.9rem;
+  background: rgba(241, 90, 36, 0.1);
+  color: var(--auth-orange-dark);
+  padding: 0.8rem;
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.join-group-privacy {
+  margin: 0;
+  color: var(--auth-muted);
+  font-size: 0.78rem;
+  font-weight: 650;
+  line-height: 1.4;
+}
+
+.join-group-success__mark {
+  display: grid;
+  width: 4rem;
+  aspect-ratio: 1;
+  place-items: center;
+  border-radius: var(--auth-radius-blob);
+  background: var(--auth-teal);
+  color: var(--auth-cream);
+  font-size: 2rem;
+  font-weight: 900;
+}
+
+.join-group-summary {
+  border: 1px solid var(--auth-line);
+  border-radius: 1rem;
+  background: rgba(15, 95, 92, 0.07);
+  padding: 1rem;
+}
+
+.join-group-summary div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.join-group-summary span {
+  color: var(--auth-muted);
+}
+
+.join-group-summary strong {
+  overflow: hidden;
+  font-weight: 900;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 680px) {
+  .join-group-screen {
+    padding: 0.65rem !important;
+  }
+
+  .join-group-intro,
+  .join-group-panel {
+    min-height: 0;
+    border-radius: 1.1rem;
+  }
+
+  .join-group-intro h1 {
+    font-size: clamp(3.4rem, 16vw, 5.6rem);
+  }
+
+  .join-group-panel h2 {
+    font-size: clamp(2.8rem, 14vw, 4.5rem);
+  }
+}

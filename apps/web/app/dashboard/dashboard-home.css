@@ -34,8 +34,12 @@
   line-height: 1.4;
 }
 
-.diagnostic-profile-card {
+.diagnostic-profile-stack {
   align-self: start;
+  min-width: 0;
+}
+
+.diagnostic-profile-card {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   grid-template-rows: auto auto;
@@ -55,7 +59,7 @@
   padding: 0.9rem;
 }
 
-.diagnostic-profile-card span {
+.diagnostic-profile-card__avatar {
   display: grid;
   grid-row: 1 / span 2;
   width: 3.4rem;
@@ -85,6 +89,35 @@
   color: rgba(255, 249, 238, 0.7);
   font-size: 0.78rem;
   font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.diagnostic-group-status {
+  min-width: 0;
+  border: 1px solid var(--auth-line);
+  border-radius: 0.9rem;
+  background: rgba(255, 249, 238, 0.76);
+  padding: 0.72rem 0.85rem;
+}
+
+.diagnostic-group-status span {
+  flex: 0 0 auto;
+  color: var(--auth-muted);
+  font-family: var(--font-mono), monospace;
+  font-size: 0.62rem;
+  font-weight: 750;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.diagnostic-group-status strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--auth-ink);
+  font-size: 0.86rem;
+  font-weight: 900;
+  text-align: right;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -288,5 +321,13 @@
 
   .diagnostic-profile-card strong {
     font-size: 1.7rem;
+  }
+
+  .diagnostic-profile-stack {
+    width: 100%;
+  }
+
+  .diagnostic-group-status strong {
+    max-width: 65%;
   }
 }

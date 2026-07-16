@@ -9,8 +9,9 @@ import {
   type PaginationMetadata,
   type QuizAttemptHistory,
 } from "../_lib/quiz-api";
-import "./dashboard-home.css";
+import { getMyGroups, type GroupSummary } from "../_lib/groups-api";
 
+import "./dashboard-home.css";
 import { DashboardHistory } from "../_components/dashboard/dashboard-history";
 
 const scoreFormatter = new Intl.NumberFormat("id-ID");
@@ -26,6 +27,7 @@ type DashboardStats = {
 type DashboardState = {
   user: AuthUser;
   attempts: QuizAttemptHistory[];
+  group: GroupSummary | null;
   stats: DashboardStats;
   currentPage: number;
   totalPages: number;
@@ -104,18 +106,20 @@ export default function DashboardPage() {
     async function loadDashboard() {
       try {
         const user = await getCurrentUser();
-        const attemptsResult = await getMyAttempts(HISTORY_PAGE_SIZE, 1).catch(
-          () => ({
+        const [attemptsResult, groups] = await Promise.all([
+          getMyAttempts(HISTORY_PAGE_SIZE, 1).catch(() => ({
             data: [],
             metadata: undefined,
-          }),
-        );
+          })),
+          getMyGroups().catch(() => []),
+        ]);
 
         if (!isMounted) return;
 
         setState({
           user,
           attempts: attemptsResult.data,
+          group: groups[0] ?? null,
           stats: buildDashboardStats(
             attemptsResult.data,
             attemptsResult.metadata,
@@ -196,7 +200,7 @@ export default function DashboardPage() {
     );
   }
 
-  const { user, attempts, stats, currentPage, totalPages } = state;
+  const { user, attempts, group, stats, currentPage, totalPages } = state;
   const roleName = getRoleName(user);
 
   return (
@@ -212,10 +216,27 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        <div className="diagnostic-profile-card" aria-label="Profil belajar">
-          <span>{user.name.slice(0, 1).toUpperCase()}</span>
-          <strong>{roleName}</strong>
-          <small>{user.email}</small>
+        <div className="diagnostic-profile-stack grid gap-2">
+          <div className="diagnostic-profile-card" aria-label="Profil belajar">
+            <span className="diagnostic-profile-card__avatar">
+              {user.name.slice(0, 1).toUpperCase()}
+            </span>
+
+            <strong>{roleName}</strong>
+            <small>{user.email}</small>
+          </div>
+
+          <div
+            className="diagnostic-group-status flex items-center justify-between gap-3"
+            aria-label={
+              group
+                ? `Grup belajar: ${group.name}`
+                : "Mode belajar: Solo player"
+            }
+          >
+            <span>{group ? "study group" : "play mode"}</span>
+            <strong>{group?.name ?? "Solo player"}</strong>
+          </div>
         </div>
       </div>
 
