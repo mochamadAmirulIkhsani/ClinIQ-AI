@@ -27,7 +27,10 @@ const baseUser = {
   role_id: "role-1",
   last_updated_password: null,
   last_activity: null,
-  role: { id: "role-1", name: "User" },
+  role: {
+    id: "role-1",
+    name: "User",
+  },
 };
 
 const attempts = [
@@ -58,9 +61,22 @@ const moreAttempts = [
   },
 ];
 
+const groups = [
+  {
+    id: "group-1",
+    name: "Kelompok Belajar A",
+    description: "Kelompok belajar untuk latihan quiz.",
+    invite_code: "INVITEA1234",
+    owner_id: "owner-1",
+    member_count: 4,
+    my_role: "member",
+  },
+];
+
 describe("Dashboard page", () => {
   beforeEach(() => {
     replaceMock.mockReset();
+
     vi.stubGlobal(
       "fetch",
       vi.fn((url: string) => {
@@ -95,21 +111,33 @@ describe("Dashboard page", () => {
           );
         }
 
-        return Promise.reject(new Error("unexpected url"));
+        if (url.includes("/api/v1/groups")) {
+          return Promise.resolve(
+            mockApiResponse({
+              success: true,
+              message: "success",
+              data: groups,
+            }),
+          );
+        }
+
+        return Promise.reject(new Error(`unexpected url: ${url}`));
       }),
     );
   });
 
-  it("renders diagnostic dashboard from current user and attempts", async () => {
+  it("renders dashboard data and current group", async () => {
     render(<DashboardPage />);
 
     await waitFor(() => {
-      expect(screen.queryByText(/Halo, Dok Bakar/i)).toBeTruthy();
+      expect(screen.getByText(/Halo, Dok Bakar/i)).toBeTruthy();
     });
 
-    expect(screen.queryByText("diagnostic study desk")).toBeTruthy();
-    expect(screen.queryByText("Dengue Fever")).toBeTruthy();
-    expect(screen.queryByText("400 pts")).toBeTruthy();
+    expect(screen.getByText("diagnostic study desk")).toBeTruthy();
+    expect(screen.getByText("Dengue Fever")).toBeTruthy();
+    expect(screen.getByText("400 pts")).toBeTruthy();
+    expect(screen.getByText("Kelompok Belajar A")).toBeTruthy();
+
     expect(
       screen.getByText("Total Attempts").closest("article"),
     ).toHaveTextContent("10");
@@ -125,6 +153,7 @@ describe("Dashboard page", () => {
     expect(screen.getByText("Score").closest("article")).toHaveTextContent(
       "900",
     );
+
     expect(replaceMock).not.toHaveBeenCalled();
   });
 
@@ -132,17 +161,19 @@ describe("Dashboard page", () => {
     render(<DashboardPage />);
 
     await waitFor(() => {
-      expect(screen.queryByText(/Halo, Dok Bakar/i)).toBeTruthy();
+      expect(screen.getByText(/Halo, Dok Bakar/i)).toBeTruthy();
     });
 
     expect(screen.getByRole("link", { name: /daily quiz/i })).toHaveAttribute(
       "href",
       "/quiz?mode=daily",
     );
+
     expect(screen.getByRole("link", { name: /random quiz/i })).toHaveAttribute(
       "href",
       "/quiz?mode=random",
     );
+
     expect(screen.getByRole("link", { name: /join group/i })).toHaveAttribute(
       "href",
       "/groups/join",
@@ -166,7 +197,7 @@ describe("Dashboard page", () => {
           );
         }
 
-        return Promise.reject(new Error("unexpected url"));
+        return Promise.reject(new Error(`unexpected url: ${url}`));
       }),
     );
 
@@ -181,7 +212,7 @@ describe("Dashboard page", () => {
     render(<DashboardPage />);
 
     await waitFor(() => {
-      expect(screen.queryByText("Dengue Fever")).toBeTruthy();
+      expect(screen.getByText("Dengue Fever")).toBeTruthy();
     });
 
     expect(screen.queryByText("Malaria")).toBeNull();
@@ -193,7 +224,7 @@ describe("Dashboard page", () => {
     );
 
     await waitFor(() => {
-      expect(screen.queryByText("Malaria")).toBeTruthy();
+      expect(screen.getByText("Malaria")).toBeTruthy();
     });
 
     expect(
@@ -209,5 +240,61 @@ describe("Dashboard page", () => {
         name: /tampilkan lainnya/i,
       }),
     ).toBeNull();
+  });
+
+  it("shows solo player when the user has no group", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((url: string) => {
+        if (url.includes("/api/v1/auth/me")) {
+          return Promise.resolve(
+            mockApiResponse({
+              success: true,
+              message: "success",
+              data: baseUser,
+            }),
+          );
+        }
+
+        if (url.includes("/api/v1/quiz/attempts/me")) {
+          return Promise.resolve(
+            mockApiResponse({
+              success: true,
+              message: "success",
+              metadata: {
+                per_page: 3,
+                current_page: 1,
+                total_row: 1,
+                total_page: 1,
+                completed_attempts: 1,
+                correct_attempts: 1,
+                total_score: 400,
+              },
+              data: attempts,
+            }),
+          );
+        }
+
+        if (url.includes("/api/v1/groups")) {
+          return Promise.resolve(
+            mockApiResponse({
+              success: true,
+              message: "success",
+              data: [],
+            }),
+          );
+        }
+
+        return Promise.reject(new Error(`unexpected url: ${url}`));
+      }),
+    );
+
+    render(<DashboardPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Solo player")).toBeTruthy();
+    });
+
+    expect(screen.queryByText("Kelompok Belajar A")).toBeNull();
   });
 });
