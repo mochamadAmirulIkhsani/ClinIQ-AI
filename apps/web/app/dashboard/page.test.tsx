@@ -181,13 +181,6 @@ describe("Dashboard page", () => {
     expect(screen.getByText("Dengue Fever")).toBeTruthy();
     expect(screen.getByText("400 pts")).toBeTruthy();
     expect(screen.getByText("Kelompok Belajar A")).toBeTruthy();
-    expect(screen.getByText("Groups Owner")).toBeTruthy();
-    expect(screen.getByText("owner@example.test")).toBeTruthy();
-    const memberList = screen.getByRole("list", {
-      name: "Anggota Kelompok Belajar A",
-    });
-
-    expect(within(memberList).getByText("dok@email.com")).toBeTruthy();
 
     const groupPanel = screen.getByRole("region", {
       name: "Status grup belajar",
@@ -199,19 +192,34 @@ describe("Dashboard page", () => {
       }),
     ).toBeTruthy();
 
-    const actionSection = screen
-      .getByRole("heading", {
-        name: "Lanjutkan latihan klinis.",
-      })
-      .closest("section");
-
-    expect(actionSection).not.toBeNull();
-
     expect(
-      within(actionSection as HTMLElement).queryByRole("button", {
-        name: /leave group/i,
+      within(groupPanel).queryByRole("button", {
+        name: /disband group/i,
       }),
     ).toBeNull();
+
+    const memberListButton = within(groupPanel).getByRole("button", {
+      name: /member list/i,
+    });
+
+    expect(screen.queryByText("owner@example.test")).toBeNull();
+
+    fireEvent.click(memberListButton);
+
+    const membersDialog = screen.getByRole("dialog", {
+      name: "Anggota Kelompok Belajar A",
+    });
+
+    expect(within(membersDialog).getByText("Groups Owner")).toBeTruthy();
+    expect(within(membersDialog).getByText("owner@example.test")).toBeTruthy();
+    expect(within(membersDialog).getByText("dok@email.com")).toBeTruthy();
+
+    const memberList = within(membersDialog).getByRole("list", {
+      name: "Daftar anggota Kelompok Belajar A",
+    });
+
+    expect(within(memberList).getByText("Admin")).toBeTruthy();
+    expect(within(memberList).getByText("Member")).toBeTruthy();
 
     expect(
       screen.getByText("Total Attempts").closest("article"),

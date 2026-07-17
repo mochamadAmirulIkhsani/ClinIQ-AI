@@ -19,6 +19,12 @@ const group = {
   my_role: "member" as const,
 };
 
+const leaderGroup = {
+  ...group,
+  owner_id: "user-1",
+  my_role: "admin" as const,
+};
+
 const groupDetails = {
   ...group,
   members: [
@@ -143,6 +149,57 @@ describe("Group membership modal", () => {
       expect.stringContaining("/api/v1/groups/group-1/leave"),
       expect.objectContaining({
         method: "POST",
+        credentials: "include",
+      }),
+    );
+  });
+
+  it("disbands current group when user is the leader", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(
+      mockApiResponse({
+        success: true,
+        message: "success",
+        data: {
+          message: "Group deleted",
+        },
+      }),
+    );
+
+    const onLeft = vi.fn();
+    const onClose = vi.fn();
+
+    render(
+      <GroupMembershipModal
+        isOpen
+        group={leaderGroup}
+        onClose={onClose}
+        onJoined={vi.fn()}
+        onLeft={onLeft}
+      />,
+    );
+
+    expect(
+      screen.getByRole("heading", {
+        name: "Bubarkan grup?",
+      }),
+    ).toBeTruthy();
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Bubarkan grup",
+      }),
+    );
+
+    await waitFor(() => {
+      expect(onLeft).toHaveBeenCalledTimes(1);
+    });
+
+    expect(onClose).toHaveBeenCalled();
+
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining("/api/v1/groups/group-1"),
+      expect.objectContaining({
+        method: "DELETE",
         credentials: "include",
       }),
     );
