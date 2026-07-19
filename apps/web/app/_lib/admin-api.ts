@@ -99,8 +99,8 @@ export type AdminUser = {
   email: string;
   status: boolean;
   role?: {
-    id: string;
-    name: string;
+    id?: string;
+    name?: string;
   } | null;
 };
 
@@ -117,7 +117,10 @@ export async function getAdminUsers(params?: {
     `/api/v1/users?${queryParams.toString()}`,
   );
 
-  const total = (result.metadata as { total_row?: number })?.total_row ?? (result.data?.length ?? 0);
+  const total =
+    (result.metadata as { total_row?: number })?.total_row ??
+    result.data?.length ??
+    0;
 
   return {
     data: result.data ?? [],
@@ -126,9 +129,12 @@ export async function getAdminUsers(params?: {
 }
 
 export async function toggleUserAccess(userId: string): Promise<void> {
-  await requestAdminApi<void>(`/api/v1/users/${encodeURIComponent(userId)}/access`, {
-    method: "PUT",
-  });
+  await requestAdminApi<void>(
+    `/api/v1/users/${encodeURIComponent(userId)}/access`,
+    {
+      method: "PUT",
+    },
+  );
 }
 
 export async function resetUserPassword(userId: string): Promise<string> {
@@ -140,4 +146,3 @@ export async function resetUserPassword(userId: string): Promise<string> {
   );
   return result.message || "Password reset success.";
 }
-
