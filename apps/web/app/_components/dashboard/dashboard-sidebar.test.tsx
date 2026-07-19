@@ -11,18 +11,62 @@ vi.mock("next/navigation", () => ({
   }),
 }));
 
-vi.mock("../../_lib/auth-api", () => ({
-  logoutUser: () => logoutUserMock(),
-}));
+vi.mock("../../_lib/auth-api", async () => {
+  const actual = await vi.importActual<typeof import("../../_lib/auth-api")>(
+    "../../_lib/auth-api",
+  );
+
+  return {
+    ...actual,
+    logoutUser: () => logoutUserMock(),
+  };
+});
 
 describe("DashboardSidebar", () => {
+  const normalUser = {
+    id: "user-1",
+    name: "Normal User",
+    email: "user@example.test",
+    status: true,
+    is_superadmin: false,
+    role: {
+      id: "role-user",
+      name: "User",
+      is_superadmin: false,
+    },
+  };
+
+  const adminUser = {
+    ...normalUser,
+    id: "admin-1",
+    name: "Admin User",
+    email: "admin@example.test",
+    role: {
+      id: "role-admin",
+      name: "Admin",
+      is_superadmin: false,
+    },
+  };
+
+  const superadminUser = {
+    ...normalUser,
+    id: "superadmin-1",
+    name: "Super Admin",
+    email: "superadmin@example.test",
+    is_superadmin: true,
+    role: {
+      id: "role-superadmin",
+      name: "Superadmin",
+      is_superadmin: true,
+    },
+  };
   beforeEach(() => {
     replaceMock.mockReset();
     logoutUserMock.mockReset();
   });
 
   it("toggles mobile dashboard menu", () => {
-    render(<DashboardSidebar />);
+    render(<DashboardSidebar user={normalUser} />);
 
     const menuButton = screen.getByRole("button", {
       name: /buka menu dashboard/i,
@@ -39,7 +83,7 @@ describe("DashboardSidebar", () => {
   });
 
   it("closes mobile menu with Escape", () => {
-    render(<DashboardSidebar />);
+    render(<DashboardSidebar user={normalUser} />);
 
     fireEvent.click(
       screen.getByRole("button", {
@@ -56,7 +100,7 @@ describe("DashboardSidebar", () => {
   });
 
   it("opens account menu", () => {
-    render(<DashboardSidebar />);
+    render(<DashboardSidebar user={normalUser} />);
 
     fireEvent.click(screen.getByRole("button", { name: /akun/i }));
 
@@ -67,7 +111,7 @@ describe("DashboardSidebar", () => {
   it("logs out and redirects to login", async () => {
     logoutUserMock.mockResolvedValueOnce(true);
 
-    render(<DashboardSidebar />);
+    render(<DashboardSidebar user={normalUser} />);
 
     fireEvent.click(screen.getByRole("button", { name: /akun/i }));
     fireEvent.click(screen.getByRole("menuitem", { name: "Logout" }));
@@ -82,7 +126,7 @@ describe("DashboardSidebar", () => {
   it("shows logout error", async () => {
     logoutUserMock.mockRejectedValueOnce(new Error("failed"));
 
-    render(<DashboardSidebar />);
+    render(<DashboardSidebar user={normalUser} />);
 
     fireEvent.click(screen.getByRole("button", { name: /akun/i }));
     fireEvent.click(screen.getByRole("menuitem", { name: "Logout" }));
@@ -93,5 +137,35 @@ describe("DashboardSidebar", () => {
 
     expect(screen.queryByText("Logout gagal. Coba lagi.")).toBeTruthy();
     expect(replaceMock).not.toHaveBeenCalled();
+  });
+
+  it("hides admin navigation from normal users", () => {
+    render(<DashboardSidebar user={normalUser} />);
+
+    expect(
+      screen.queryByRole("link", {
+        name: /admin/i,
+      }),
+    ).toBeNull();
+  });
+
+  it("shows admin navigation for Admin role", () => {
+    render(<DashboardSidebar user={adminUser} />);
+
+    expect(
+      screen.getByRole("link", {
+        name: /admin/i,
+      }),
+    ).toHaveAttribute("href", "/admin");
+  });
+
+  it("shows admin navigation for superadmin", () => {
+    render(<DashboardSidebar user={superadminUser} />);
+
+    expect(
+      screen.getByRole("link", {
+        name: /admin/i,
+      }),
+    ).toHaveAttribute("href", "/admin");
   });
 });
