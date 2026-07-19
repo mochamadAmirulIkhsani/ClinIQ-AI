@@ -324,13 +324,43 @@ describe('auth API', () => {
 
       expect(response.status).toBe(200)
       expect(response.body.success).toBe(true)
-      expect(response.body.data).toBe(true)
+      expect(response.body.data.changed_at).toBeTruthy()
+      expect(
+         Number.isNaN(
+            Date.parse(response.body.data.changed_at)
+         )
+      ).toBe(false)
 
       const savedUser = await db.user.findOne({
          where: { email: 'auth-password@example.test' }
       })
 
+      expect(savedUser.last_updated_password).toBeTruthy()
+
       expect(bcrypt.compare(NEW_PASSWORD, savedUser.password)).toBe(true)
+   })
+
+   it('change password rejects mismatched confirmation', async () => {
+      await createUser({
+         email: 'auth-password@example.test'
+      })
+
+      const cookie = await loginCookie(
+         'auth-password@example.test'
+      )
+
+      const response = await request(app)
+         .put('/api/v1/auth/change-password')
+         .set('Cookie', cookie)
+         .send({
+            old_password: TEST_PASSWORD,
+            new_password: NEW_PASSWORD,
+            confirm_password: 'DifferentPassword123'
+         })
+
+      expect(response.status).toBe(400)
+      expect(response.body.success).toBe(false)
+      expect(response.body.data).toBeNull()
    })
 
    it('change password rejects wrong old password', async () => {

@@ -27,11 +27,12 @@ const TEST_EMAILS = [
 ]
 
 let userRole
+let adminRole
 let adminUser
 let adminCookie
 
-async function ensureUserRole() {
-   const [role] = await db.role.findOrCreate({
+async function ensureRoles() {
+   const [normalRole] = await db.role.findOrCreate({
       where: { name: 'User' },
       defaults: {
          name: 'User',
@@ -39,7 +40,26 @@ async function ensureUserRole() {
       }
    })
 
-   return role
+   const [privilegedRole] = await db.role.findOrCreate({
+      where: { name: 'Users Test Admin' },
+      defaults: {
+         name: 'Users Test Admin',
+         is_superadmin: true
+      }
+   })
+
+   await normalRole.update({
+      is_superadmin: false
+   })
+
+   await privilegedRole.update({
+      is_superadmin: true
+   })
+
+   return {
+      userRole: normalRole,
+      adminRole: privilegedRole
+   }
 }
 
 async function cleanupUsers() {
@@ -102,7 +122,10 @@ function authedDelete(path) {
 describe('users API', () => {
    beforeAll(async () => {
       await db.sequelize.authenticate()
-      userRole = await ensureUserRole()
+
+      const roles = await ensureRoles()
+      userRole = roles.userRole
+      adminRole = roles.adminRole
    })
 
    beforeEach(async () => {
@@ -110,7 +133,8 @@ describe('users API', () => {
 
       adminUser = await createUser({
          email: 'users-admin@example.test',
-         name: 'Users Admin'
+         name: 'Users Admin',
+         roleId: adminRole.id
       })
       adminCookie = await loginCookie(adminUser.email)
    })
@@ -148,6 +172,27 @@ describe('users API', () => {
          total_row: 2,
          total_page: 2
       })
+   })
+
+   it('user management rejects normal users', async () => {
+      const normalUser = await createUser({
+         email: 'users-access@example.test',
+         name: 'Normal User'
+      })
+
+      const normalCookie = await loginCookie(
+         normalUser.email
+      )
+
+      const response = await request(app)
+         .get('/api/v1/users')
+         .set('Cookie', normalCookie)
+
+      expect(response.status).toBe(403)
+      expect(response.body.success).toBe(false)
+      expect(response.body.message).toBe(
+         'Forbidden: Insufficient permissions'
+      )
    })
 
    it('create user rejects duplicate email', async () => {

@@ -107,6 +107,37 @@ const groupDetails = {
   ],
 };
 
+const groupLeaderboard = {
+  scope: "group",
+  group: {
+    id: "group-1",
+    name: "Kelompok Belajar A",
+  },
+  entries: [
+    {
+      user_id: "user-1",
+      name: "Dok Bakar",
+      score: 900,
+      rank: 1,
+      position: 1,
+    },
+  ],
+  current_user: {
+    user_id: "user-1",
+    name: "Dok Bakar",
+    score: 900,
+    rank: 1,
+    position: 1,
+  },
+  total_participants: 1,
+};
+
+const globalLeaderboard = {
+  ...groupLeaderboard,
+  scope: "global",
+  group: null,
+};
+
 describe("Dashboard page", () => {
   beforeEach(() => {
     replaceMock.mockReset();
@@ -140,6 +171,26 @@ describe("Dashboard page", () => {
                 total_score: 900,
               },
               data: isSecondPage ? moreAttempts : attempts,
+            }),
+          );
+        }
+
+        if (String(input).includes("/api/v1/leaderboards/group/group-1")) {
+          return Promise.resolve(
+            mockApiResponse({
+              success: true,
+              message: "success",
+              data: groupLeaderboard,
+            }),
+          );
+        }
+
+        if (String(input).includes("/api/v1/leaderboards/global")) {
+          return Promise.resolve(
+            mockApiResponse({
+              success: true,
+              message: "success",
+              data: globalLeaderboard,
             }),
           );
         }
@@ -364,6 +415,16 @@ describe("Dashboard page", () => {
           );
         }
 
+        if (String(input).includes("/api/v1/leaderboards/global")) {
+          return Promise.resolve(
+            mockApiResponse({
+              success: true,
+              message: "success",
+              data: globalLeaderboard,
+            }),
+          );
+        }
+
         if (String(input).includes("/api/v1/groups")) {
           return Promise.resolve(
             mockApiResponse({
@@ -397,5 +458,16 @@ describe("Dashboard page", () => {
         name: "Masukkan kode grup.",
       }),
     ).toBeTruthy();
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("heading", {
+          name: "Leaderboard.",
+        }),
+      ).toBeTruthy();
+    });
+
+    expect(screen.getByText("900")).toBeTruthy();
+    expect(screen.getByText("Kamu")).toBeTruthy();
   });
 });

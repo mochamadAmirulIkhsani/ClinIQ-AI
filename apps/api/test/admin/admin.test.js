@@ -363,4 +363,23 @@ describe('admin API', () => {
       expect(response.body.success).toBe(true)
       expect(Array.isArray(response.body.data)).toBe(true)
    })
+
+   it('user management route rejects normal user', async () => {
+      const user = await createUser({
+         email: 'admin-normal@example.test',
+         roleId: normalRole.id
+      })
+
+      const cookie = await loginCookie(user.email)
+
+      const response = await request(app)
+         .get('/api/v1/users')
+         .set('Cookie', cookie)
+
+      expect(response.status).toBe(403)
+      expect(response.body.success).toBe(false)
+      expect(response.body.message).toBe(
+         'Forbidden: Insufficient permissions'
+      )
+   })
 })
