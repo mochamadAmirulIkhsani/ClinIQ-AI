@@ -1,5 +1,9 @@
 const db = require('../../../db/models')
 const { HttpStatusCode } = require('axios')
+const {
+   groupLeaderboardCacheKey,
+   invalidateLeaderboardCaches
+} = require('../../utils/leaderboard-cache')
 
 function normalizeInviteCode(value) {
    return typeof value === 'string' ? value.trim().toUpperCase() : ''
@@ -41,6 +45,10 @@ async function addGroupMember(group, userId) {
          }
       )
    })
+
+   await invalidateLeaderboardCaches([
+      groupLeaderboardCacheKey(group.id)
+   ])
 
    return {
       id: group.id,
@@ -352,6 +360,10 @@ class Controller {
             )
          })
 
+         await invalidateLeaderboardCaches([
+            groupLeaderboardCacheKey(id)
+         ])
+
          res.status(HttpStatusCode.Ok).json({
             success: true,
             data: { message: 'Successfully left group' }
@@ -386,7 +398,11 @@ class Controller {
             })
          }
 
-         await group.destroy() // CASCADE deletes members
+         await group.destroy()
+
+         await invalidateLeaderboardCaches([
+            groupLeaderboardCacheKey(id)
+         ])
 
          res.status(HttpStatusCode.Ok).json({
             success: true,

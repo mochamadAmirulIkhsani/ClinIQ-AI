@@ -1,11 +1,15 @@
 const db = require('../../../db/models')
-const redisClient = require('../../../config/redis')
 const { getCache, setCacheWithTTL } = require('../../utils/redis')
 const { getAIClient } = require('../../config/ai')
 const { Op } = require('sequelize')
 const { HttpStatusCode } = require('axios')
 const { MAX_CLUES, scoreForClues } = require('../../utils/quiz')
 const { generateForDisease } = require('../../utils/vignette')
+const {
+   globalLeaderboardCacheKey,
+   groupLeaderboardCacheKey,
+   invalidateLeaderboardCaches
+} = require('../../utils/leaderboard-cache')
 
 const CACHE_TTL_SECONDS = 86400
 const EMPTY_QUIZ_MESSAGE = 'No more vignettes available. All completed!'
@@ -108,6 +112,31 @@ async function createAttempt(userId, vignetteId) {
    return attempt
 }
 
+async function invalidateLeaderboardsForUser(userId) {
+   try {
+      const memberships = await db.GroupMember.findAll({
+         where: {
+            user_id: userId
+         },
+         attributes: ['group_id']
+      })
+
+      await invalidateLeaderboardCaches([
+         globalLeaderboardCacheKey(),
+         ...memberships.map((membership) =>
+            groupLeaderboardCacheKey(
+               membership.group_id
+            )
+         )
+      ])
+   } catch (error) {
+      console.error(
+         'Leaderboard cache invalidation failed:',
+         error.message
+      )
+   }
+}
+
 /**
  * Async helper to generate AI explanation and save to DB/cache.
  * @param {string} diseaseId
@@ -183,24 +212,6 @@ Format your response as JSON:
       console.error(
          `Failed to generate explanation for ${diseaseId}:`,
          error.message
-      )
-   }
-}
-
-async function updateLeaderboards(userId, score) {
-   await redisClient.ping()
-   await redisClient.zincrby('global_leaderboard', score, userId)
-
-   const groupMember = await db.GroupMember.findOne({
-      where: { user_id: userId },
-      attributes: ['group_id']
-   })
-
-   if (groupMember) {
-      await redisClient.zincrby(
-         `group_leaderboard:${groupMember.group_id}`,
-         score,
-         userId
       )
    }
 }
@@ -400,10 +411,8 @@ class Controller {
             attempt.score = scoreForClues(cluesRevealed)
             await attempt.save()
 
-            // Fire and forget updates
-            updateLeaderboards(userId, attempt.score).catch((err) =>
-               console.error('Leaderboard update failed:', err.message)
-            )
+            await invalidateLeaderboardsForUser(userId)
+
             if (process.env.SKIP_AI_EXPLANATIONS !== 'true') {
                generateExplanation(attempt.vignette.disease_id, 'id').catch(
                   (err) => console.error('AI explanation failed:', err.message)
@@ -415,6 +424,7 @@ class Controller {
                data: {
                   is_correct: true,
                   score: attempt.score,
+                  clues_revealed: cluesRevealed,
                   correct_disease: {
                      name: attempt.vignette.disease.name,
                      icd_code: attempt.vignette.disease.icd_code

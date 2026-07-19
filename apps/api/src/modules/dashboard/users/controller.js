@@ -88,7 +88,6 @@ class Controller {
 
    static async showUser(req, res) {
       try {
-         const user = req.user
          const userId = req.params.user_id
 
          if (!uuid.validate(userId)) {
