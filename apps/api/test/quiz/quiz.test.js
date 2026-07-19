@@ -531,4 +531,101 @@ describe('quiz API', () => {
          total_score: 500
       })
    })
+
+   it('my attempts hides disease answer for unfinished attempts', async () => {
+      const attempt = await createAttempt(
+         users.primary,
+         quizData.first.vignette
+      )
+
+      const response = await authGet(
+         '/api/v1/quiz/attempts/me'
+      )
+
+      const historyItem =
+         response.body.data.find(
+            (item) => item.id === attempt.id
+         )
+
+      expect(response.status).toBe(200)
+      expect(historyItem.disease_name).toBeNull()
+      expect(historyItem.disease_icd).toBeNull()
+   })
+
+   it('attempt detail returns completed attempt information', async () => {
+      const attempt = await createAttempt(
+         users.primary,
+         quizData.first.vignette,
+         {
+            clues_revealed: 2,
+            is_correct: true,
+            score: 400,
+            submitted_diagnosis:
+               quizData.first.disease.name
+         }
+      )
+
+      await db.AIExplanation.create({
+         disease_id: quizData.first.disease.id,
+         locale: 'id',
+         overview: 'History overview',
+         pathophysiology: 'History mechanism',
+         clinical_features: ['Feature one'],
+         diagnosis: ['Diagnosis one'],
+         management: ['Management one'],
+         prevention: ['Prevention one'],
+         key_points: ['Key point one']
+      })
+
+      const response = await authGet(
+         `/api/v1/quiz/attempts/${attempt.id}`
+      )
+
+      expect(response.status).toBe(200)
+      expect(response.body.success).toBe(true)
+
+      expect(response.body.data).toMatchObject({
+         id: attempt.id,
+         is_correct: true,
+         score: 400,
+         submitted_diagnosis:
+            quizData.first.disease.name,
+         disease: {
+            id: quizData.first.disease.id,
+            name: quizData.first.disease.name,
+            icd_code:
+               quizData.first.disease.icd_code,
+            description:
+               `${quizData.first.disease.name} description`
+         },
+         explanation: {
+            overview: 'History overview'
+         }
+      })
+
+      expect(response.body.data.clues).toHaveLength(5)
+      expect(
+         response.body.data.clues[0]
+      ).toMatchObject({
+         clue_number: 1,
+         content: 'quiz-test-a clue 1',
+         type: 'history'
+      })
+   })
+
+   it('attempt detail rejects unfinished attempt', async () => {
+      const attempt = await createAttempt(
+         users.primary,
+         quizData.first.vignette
+      )
+
+      const response = await authGet(
+         `/api/v1/quiz/attempts/${attempt.id}`
+      )
+
+      expect(response.status).toBe(409)
+      expect(response.body.message).toBe(
+         'Attempt is not completed'
+      )
+   })
 })
