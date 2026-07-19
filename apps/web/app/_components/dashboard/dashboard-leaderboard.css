@@ -1,0 +1,292 @@
+.dashboard-leaderboard {
+  display: grid;
+  gap: 1rem;
+}
+
+.dashboard-leaderboard__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.dashboard-leaderboard__header h2 {
+  max-width: 12ch;
+  margin: 0;
+  font-family: var(--font-display), serif;
+  font-size: clamp(2.6rem, 5vw, 5rem);
+  font-weight: 900;
+  line-height: 0.8;
+  letter-spacing: -0.085em;
+}
+
+.dashboard-leaderboard__description {
+  max-width: 38rem;
+  margin: 0.75rem 0 0;
+  color: var(--auth-ink-soft);
+  font-size: 0.88rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.dashboard-leaderboard__count {
+  flex: 0 0 auto;
+  border: 1px solid rgba(15, 95, 92, 0.24);
+  border-radius: 999px;
+  background: rgba(15, 95, 92, 0.08);
+  color: var(--auth-teal-dark);
+  padding: 0.55rem 0.7rem;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dashboard-leaderboard__tabs {
+  display: inline-grid;
+  width: min(100%, 18rem);
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 0.25rem;
+  border-radius: 0.9rem;
+  background: var(--auth-line);
+  padding: 0.25rem;
+}
+
+.dashboard-leaderboard__tab {
+  min-height: 2.4rem;
+  cursor: pointer;
+  border: 0;
+  border-radius: 0.7rem;
+  background: transparent;
+  color: var(--auth-muted);
+  font-size: 0.76rem;
+  font-weight: 900;
+  transition:
+    background 180ms ease,
+    color 180ms ease,
+    transform 180ms var(--auth-ease-snap);
+}
+
+.dashboard-leaderboard__tab[aria-selected="true"] {
+  background: var(--auth-cream);
+  color: var(--auth-ink);
+  box-shadow: 0 0.15rem 0.7rem rgba(31, 36, 33, 0.08);
+}
+
+.dashboard-leaderboard__tab:hover {
+  color: var(--auth-ink);
+}
+
+.dashboard-leaderboard__tab:focus-visible {
+  outline: 3px solid rgba(27, 60, 255, 0.5);
+  outline-offset: 2px;
+}
+
+.dashboard-leaderboard__panel {
+  min-width: 0;
+}
+
+.dashboard-leaderboard__list {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dashboard-leaderboard__entry {
+  display: grid;
+  grid-template-columns: 2rem 2.4rem minmax(0, 1fr) auto;
+  gap: 0.7rem;
+  align-items: center;
+  min-width: 0;
+  border: 1px solid var(--auth-line);
+  border-radius: 0.9rem;
+  background: rgba(255, 249, 238, 0.5);
+  padding: 0.7rem;
+}
+
+.dashboard-leaderboard__entry--current {
+  border-color: rgba(27, 60, 255, 0.3);
+  background: rgba(27, 60, 255, 0.06);
+}
+
+.dashboard-leaderboard__rank {
+  display: grid;
+  width: 2rem;
+  aspect-ratio: 1;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--auth-line);
+  color: var(--auth-ink);
+  font-family: var(--font-mono), monospace;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.dashboard-leaderboard__rank--first {
+  background: var(--auth-orange);
+  color: var(--auth-cream);
+}
+
+.dashboard-leaderboard__rank--second {
+  background: var(--auth-teal);
+  color: var(--auth-cream);
+}
+
+.dashboard-leaderboard__rank--third {
+  background: var(--auth-blue);
+  color: var(--auth-cream);
+}
+
+.dashboard-leaderboard__avatar {
+  display: grid;
+  width: 2.4rem;
+  aspect-ratio: 1;
+  place-items: center;
+  border-radius: var(--auth-radius-blob);
+  background: var(--auth-ink);
+  color: var(--auth-cream);
+  font-family: var(--font-display), serif;
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.dashboard-leaderboard__identity {
+  display: grid;
+  min-width: 0;
+}
+
+.dashboard-leaderboard__identity strong {
+  overflow: hidden;
+  font-size: 0.84rem;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-leaderboard__identity small {
+  margin-top: 0.1rem;
+  color: var(--auth-blue);
+  font-family: var(--font-mono), monospace;
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dashboard-leaderboard__score {
+  color: var(--auth-teal-dark);
+  font-family: var(--font-display), serif;
+  font-size: 1.25rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.dashboard-leaderboard__score small {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.dashboard-leaderboard__state,
+.dashboard-leaderboard__error {
+  margin: 0;
+  border: 1px dashed var(--auth-line);
+  border-radius: 0.9rem;
+  color: var(--auth-muted);
+  padding: 1rem;
+  font-size: 0.82rem;
+  font-weight: 750;
+}
+
+.dashboard-leaderboard__error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-color: rgba(199, 67, 23, 0.24);
+  background: rgba(241, 90, 36, 0.08);
+  color: var(--auth-orange-dark);
+}
+
+.dashboard-leaderboard__error p {
+  margin: 0;
+}
+
+.dashboard-leaderboard__error button {
+  flex: 0 0 auto;
+  cursor: pointer;
+  border: 0;
+  border-radius: 999px;
+  background: var(--auth-orange-dark);
+  color: var(--auth-cream);
+  padding: 0.65rem 0.8rem;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.dashboard-leaderboard__current-rank {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 0.75rem;
+  align-items: center;
+  margin-top: 0.7rem;
+  border: 1px solid rgba(27, 60, 255, 0.28);
+  border-radius: 0.9rem;
+  background: rgba(27, 60, 255, 0.06);
+  padding: 0.75rem;
+}
+
+.dashboard-leaderboard__current-rank span {
+  font-size: 0.8rem;
+  font-weight: 900;
+}
+
+.dashboard-leaderboard__current-rank strong {
+  font-family: var(--font-display), serif;
+  font-size: 1.4rem;
+  font-weight: 900;
+}
+
+.dashboard-leaderboard__current-rank small {
+  color: var(--auth-teal-dark);
+  font-family: var(--font-mono), monospace;
+  font-size: 0.66rem;
+  font-weight: 800;
+}
+
+@media (max-width: 720px) {
+  .dashboard-leaderboard__header {
+    display: grid;
+  }
+
+  .dashboard-leaderboard__count {
+    justify-self: start;
+  }
+
+  .dashboard-leaderboard__tabs {
+    width: 100%;
+  }
+
+  .dashboard-leaderboard__entry {
+    grid-template-columns: 2rem 2.2rem minmax(0, 1fr);
+  }
+
+  .dashboard-leaderboard__score {
+    grid-column: 3;
+    font-size: 1rem;
+  }
+
+  .dashboard-leaderboard__error {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .dashboard-leaderboard__error button {
+    width: 100%;
+  }
+}

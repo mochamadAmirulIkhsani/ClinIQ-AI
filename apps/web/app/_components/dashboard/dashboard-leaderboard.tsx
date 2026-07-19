@@ -4,41 +4,78 @@ import { useEffect, useState } from "react";
 import {
   getGlobalLeaderboard,
   getGroupLeaderboard,
+  type LeaderboardData,
   type LeaderboardEntry,
 } from "../../_lib/leaderboard-api";
-import { type GroupSummary } from "../../_lib/groups-api";
+import type { GroupSummary } from "../../_lib/groups-api";
+import "./dashboard-leaderboard.css";
 
 type DashboardLeaderboardProps = {
   group: GroupSummary | null;
 };
 
+type LeaderboardTab = "global" | "group";
+
+const scoreFormatter = new Intl.NumberFormat("id-ID");
+
+function initials(name: string): string {
+  return name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part.slice(0, 1).toUpperCase())
+    .join("");
+}
+
+function podiumClass(entry: LeaderboardEntry): string {
+  if (entry.position === 1) return " dashboard-leaderboard__rank--first";
+  if (entry.position === 2) return " dashboard-leaderboard__rank--second";
+  if (entry.position === 3) return " dashboard-leaderboard__rank--third";
+
+  return "";
+}
+
 export function DashboardLeaderboard({ group }: DashboardLeaderboardProps) {
-  const [tab, setTab] = useState<"global" | "group">(group ? "group" : "global");
-  const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
+  const groupId = group?.id;
+  const [tab, setTab] = useState<LeaderboardTab>(group ? "group" : "global");
+  const [data, setData] = useState<LeaderboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
-    let mounted = true;
+    if (!groupId && tab === "group") {
+      setTab("global");
+    }
+  }, [groupId, tab]);
+
+  useEffect(() => {
+    let isMounted = true;
 
     async function loadLeaderboard() {
       try {
         setIsLoading(true);
         setError("");
-        const data =
-          tab === "group" && group
-            ? await getGroupLeaderboard(group.id)
+
+        const result =
+          tab === "group" && groupId
+            ? await getGroupLeaderboard(groupId)
             : await getGlobalLeaderboard();
 
-        if (mounted) {
-          setEntries(data);
+        if (isMounted) {
+          setData(result);
         }
-      } catch (err) {
-        if (mounted) {
-          setError(err instanceof Error ? err.message : "Gagal memuat leaderboard.");
+      } catch (requestError) {
+        if (isMounted) {
+          setData(null);
+          setError(
+            requestError instanceof Error
+              ? requestError.message
+              : "Gagal memuat leaderboard.",
+          );
         }
       } finally {
-        if (mounted) {
+        if (isMounted) {
           setIsLoading(false);
         }
       }
@@ -47,93 +84,158 @@ export function DashboardLeaderboard({ group }: DashboardLeaderboardProps) {
     loadLeaderboard();
 
     return () => {
-      mounted = false;
+      isMounted = false;
     };
-  }, [tab, group]);
+  }, [groupId, reloadKey, tab]);
+
+  const entries = data?.entries ?? [];
+  const currentUser = data?.current_user ?? null;
+  const isCurrentUserVisible =
+    currentUser !== null &&
+    entries.some((entry) => entry.user_id === currentUser.user_id);
 
   return (
-    <section className="diagnostic-panel action-hub" style={{ marginTop: "1.5rem" }}>
-      <div className="diagnostic-section-head">
+    <section
+      className="dashboard-leaderboard diagnostic-panel"
+      aria-labelledby="dashboard-leaderboard-title"
+      aria-busy={isLoading}
+    >
+      <div className="dashboard-leaderboard__header">
         <div>
           <p className="diagnostic-eyebrow">competitive edge</p>
-          <h2>Leaderboard Ranking.</h2>
+          <h2 id="dashboard-leaderboard-title">Leaderboard.</h2>
+          <p className="dashboard-leaderboard__description">
+            {tab === "group"
+              ? "Peringkat anggota berdasarkan skor yang diperoleh setelah bergabung."
+              : "Peringkat skor klinis seluruh pemain aktif."}
+          </p>
         </div>
+
+        {data ? (
+          <span className="dashboard-leaderboard__count">
+            {scoreFormatter.format(data.total_participants)} peserta
+          </span>
+        ) : null}
       </div>
 
-      <div className="group-modal__tabs flex gap-1 rounded-xl bg-[var(--auth-line)] p-1 mb-4" style={{ maxWidth: "20rem" }}>
+      <div
+        className="dashboard-leaderboard__tabs"
+        role="tablist"
+        aria-label="Jenis leaderboard"
+      >
         <button
           type="button"
-          className={`flex-1 rounded-lg px-3 py-1.5 text-xs font-bold transition ${
-            tab === "global"
-              ? "bg-[var(--auth-cream)] text-[var(--auth-ink)] shadow-sm"
-              : "text-[var(--auth-muted)] hover:text-[var(--auth-ink)]"
-          }`}
+          role="tab"
+          id="leaderboard-tab-global"
+          aria-selected={tab === "global"}
+          aria-controls="leaderboard-panel"
+          className="dashboard-leaderboard__tab"
           onClick={() => setTab("global")}
         >
           Global
         </button>
+
         {group ? (
           <button
             type="button"
-            className={`flex-1 rounded-lg px-3 py-1.5 text-xs font-bold transition ${
-              tab === "group"
-                ? "bg-[var(--auth-cream)] text-[var(--auth-ink)] shadow-sm"
-                : "text-[var(--auth-muted)] hover:text-[var(--auth-ink)]"
-            }`}
+            role="tab"
+            id="leaderboard-tab-group"
+            aria-selected={tab === "group"}
+            aria-controls="leaderboard-panel"
+            className="dashboard-leaderboard__tab"
             onClick={() => setTab("group")}
           >
-            Grup: {group.name}
+            Grup
           </button>
         ) : null}
       </div>
 
-      {isLoading ? (
-        <p className="quiz-muted text-sm">Memuat ranking...</p>
-      ) : error ? (
-        <p role="alert" className="settings-form__error text-sm">
-          {error}
-        </p>
-      ) : entries.length === 0 ? (
-        <p className="quiz-muted text-sm">Belum ada skor tercatat.</p>
-      ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-          {entries.map((entry, index) => (
-            <div
-              key={entry.user_id}
-              className="flex justify-between items-center p-3 rounded-lg border border-[var(--auth-line)] bg-[rgba(255,249,238,0.4)]"
-              style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
+      <div
+        id="leaderboard-panel"
+        role="tabpanel"
+        aria-labelledby={
+          tab === "group" ? "leaderboard-tab-group" : "leaderboard-tab-global"
+        }
+        className="dashboard-leaderboard__panel"
+      >
+        {isLoading ? (
+          <p className="dashboard-leaderboard__state" aria-live="polite">
+            Memuat peringkat...
+          </p>
+        ) : error ? (
+          <div className="dashboard-leaderboard__error" role="alert">
+            <p>{error}</p>
+            <button
+              type="button"
+              onClick={() => setReloadKey((current) => current + 1)}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                <span
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    width: "1.75rem",
-                    height: "1.75rem",
-                    borderRadius: "50%",
-                    fontSize: "0.8rem",
-                    fontWeight: 800,
-                    background:
-                      index === 0
-                        ? "var(--auth-orange)"
-                        : index === 1
-                        ? "var(--auth-teal)"
-                        : "var(--auth-line)",
-                    color: index < 2 ? "var(--auth-cream)" : "var(--auth-ink)",
-                  }}
+              Coba lagi
+            </button>
+          </div>
+        ) : entries.length === 0 ? (
+          <p className="dashboard-leaderboard__state">
+            Belum ada skor yang tercatat.
+          </p>
+        ) : (
+          <ol
+            className="dashboard-leaderboard__list"
+            aria-label={
+              tab === "group"
+                ? `Peringkat grup ${group?.name}`
+                : "Peringkat global"
+            }
+          >
+            {entries.map((entry) => {
+              const isCurrentUser = entry.user_id === currentUser?.user_id;
+
+              return (
+                <li
+                  key={entry.user_id}
+                  className={`dashboard-leaderboard__entry${
+                    isCurrentUser
+                      ? " dashboard-leaderboard__entry--current"
+                      : ""
+                  }`}
                 >
-                  {index + 1}
-                </span>
-                <span className="font-bold text-sm">{entry.name}</span>
-              </div>
-              <strong className="text-sm" style={{ color: "var(--auth-teal-dark)" }}>
-                {entry.score} pts
-              </strong>
-            </div>
-          ))}
-        </div>
-      )}
+                  <span
+                    className={`dashboard-leaderboard__rank${podiumClass(
+                      entry,
+                    )}`}
+                    aria-label={`Peringkat ${entry.rank}`}
+                  >
+                    {entry.rank}
+                  </span>
+
+                  <span
+                    className="dashboard-leaderboard__avatar"
+                    aria-hidden="true"
+                  >
+                    {initials(entry.name)}
+                  </span>
+
+                  <span className="dashboard-leaderboard__identity">
+                    <strong>{entry.name}</strong>
+                    {isCurrentUser ? <small>Kamu</small> : null}
+                  </span>
+
+                  <strong className="dashboard-leaderboard__score">
+                    {scoreFormatter.format(entry.score)}
+                    <small> pts</small>
+                  </strong>
+                </li>
+              );
+            })}
+          </ol>
+        )}
+
+        {!isLoading && !error && currentUser && !isCurrentUserVisible ? (
+          <div className="dashboard-leaderboard__current-rank">
+            <span>Peringkatmu</span>
+            <strong>#{currentUser.rank}</strong>
+            <small>{scoreFormatter.format(currentUser.score)} pts</small>
+          </div>
+        ) : null}
+      </div>
     </section>
   );
 }
