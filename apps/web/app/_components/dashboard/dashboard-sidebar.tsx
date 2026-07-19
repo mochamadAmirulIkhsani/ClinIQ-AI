@@ -3,22 +3,42 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { logoutUser } from "../../_lib/auth-api";
+import { canAccessAdmin, logoutUser, type AuthUser } from "../../_lib/auth-api";
 import "./dashboard-sidebar.css";
 
-const links = [
+const dashboardLinks = [
   { href: "/dashboard", label: "Study Desk", meta: "Overview" },
-  { href: "/dashboard#daily-case", label: "Daily Case", meta: "Practice" },
-  { href: "/dashboard/settings", label: "Account", meta: "Profile" },
-  { href: "/admin", label: "Admin", meta: "Data" },
+  {
+    href: "/dashboard#daily-case",
+    label: "Daily Case",
+    meta: "Practice",
+  },
+  {
+    href: "/dashboard/settings",
+    label: "Account",
+    meta: "Profile",
+  },
 ];
 
-export function DashboardSidebar() {
+const adminLink = {
+  href: "/admin",
+  label: "Admin",
+  meta: "Data",
+};
+
+type DashboardSidebarProps = {
+  user: AuthUser;
+};
+
+export function DashboardSidebar({ user }: DashboardSidebarProps) {
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAccountOpen, setIsAccountOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [error, setError] = useState("");
+  const links = canAccessAdmin(user)
+    ? [...dashboardLinks, adminLink]
+    : dashboardLinks;
 
   useEffect(() => {
     function handleEscape(event: KeyboardEvent) {
